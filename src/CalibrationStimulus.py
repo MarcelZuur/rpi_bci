@@ -1,15 +1,16 @@
-import blink
+#import blink
 import numpy as np
-import bufhelp
 
 #connect to buffer
-bufhelp.connect()
+from util import bufhelp
 
+bufhelp.connect()
+print("connected")
 #init stimuli
 nSymbols = 4
 nSequences = 2
 nEpochs = 4
-stimuli = np.random.randint(nSymbols, size=(nSequences, nEpochs))
+stimuli = np.random.randint(nSymbols, size=(nSequences, nEpochs)) #TODO: less random
 
 #init frequencies
 frequencies = np.zeros(nSymbols)
@@ -19,16 +20,23 @@ frequencies[2] = 3
 frequencies[3] = 4
 
 #start stimuli
-bufhelp.sendEvent('stimulus.training','start');
+print("calibration START")
+bufhelp.sendevent('startPhase.cmd', 'calibration')
+bufhelp.sendevent('stimulus.training', 'start')
 for i in xrange(nSequences):
     for j in xrange(nEpochs):
         symbol = stimuli[i, j]
-        bufhelp.sendEvent('stimulus.showing' ,symbol)
+        bufhelp.sendevent('stimulus.visible', symbol)
         freq = frequencies[symbol]
         #blink.blink(symbol, duration, freq)
-        bufhelp.sendEvent('stimulus.sequence','end');
+        bufhelp.sendevent('stimulus.epoch', 'end')
+    bufhelp.sendevent('stimulus.sequence', 'end')
 
-bufhelp.sendEvent('stimulus.training','end');
+bufhelp.sendevent('stimulus.training', 'end')
+print("calibration END")
 
 
-
+print("train classifier")
+bufhelp.sendevent('startPhase.cmd', 'train')
+print("wait for classifier")
+bufhelp.waitnewevents(("sigproc.training","done"))
