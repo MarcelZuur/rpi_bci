@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 
-from util import bufhelp, preproc
+from network import bufhelp, preproc
 
 
 sys.path.append("../../dataAcq/buffer/python")
@@ -36,7 +36,8 @@ while run:
             data = preproc.detrend(data)
             data, badch = preproc.badchannelremoval(data)
             data = preproc.spatialfilter(data)
-            data = preproc.spectralfilter(data, (0, .1, 10, 12), bufhelp.fSample) #TODO: focus on the pre-defined frequencies.
+            data = preproc.spectrum(data, bufhelp.fSample, dim=1)
+            #data = preproc.spectralfilter(data, (0, .1, 10, 12), bufhelp.fSample) #TODO: focus on the pre-defined frequencies.
             data, events, badtrials = preproc.badtrailremoval(data, events)
             mapping = {('stimulus.visible', '0'): 0, ('stimulus.visible', '1'): 1} #TODO: no mapping?, include all classes.
             logreg.fit(data,events) #TODO: proper format

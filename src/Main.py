@@ -4,7 +4,7 @@ import select
 import threading
 import time
 
-from util import FieldTrip
+from network import FieldTrip
 
 
 class View():

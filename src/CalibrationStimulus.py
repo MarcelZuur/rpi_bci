@@ -2,7 +2,7 @@
 import numpy as np
 
 #connect to buffer
-from util import bufhelp
+from network import bufhelp
 
 bufhelp.connect()
 print("connected")
