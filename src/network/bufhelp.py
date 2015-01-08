@@ -101,7 +101,7 @@ def waitnewevents(evtypes, timeout_ms=1000,verbose = True):
     All such matching events are returned
     """
     global ftc, nEvents, nSamples, procnEvents
-    start = time.time()
+    start = time()
     update()
     elapsed_ms = 0
 
@@ -115,14 +115,41 @@ def waitnewevents(evtypes, timeout_ms=1000,verbose = True):
         if nEvents2 > nEvents : # new events to process
             procnEvents = nEvents2
             evts = ftc.getEvents((nEvents, nEvents2 -1))
-            evts = filter(lambda x: x.type in evtype, evts)
+            evts = filter(lambda x: x.type in evtypes, evts)
             if len(evts) > 0 :
                 evt=evts
 
-        elapsed_ms = (time.time() - start)*1000
+        elapsed_ms = (time() - start)*1000
         nEvents = nEvents2
     return evt
 
+# Function that blocks until a certain type of event is recieved. evttype defines what
+# event termintes the block.  Only the first such matching event is returned.
+procnEvents=0
+def waitnewevents2(evtype, timeout_ms=1000,verbose = True):
+    global ftc, nEvents, nSamples
+    global procnEvents
+    start = time()
+    nEvents,nSamples=ftc.poll()
+    elapsed_ms = 0
+
+    if verbose:
+        print "Waiting for event " + str(evtype) + " with timeout_ms " + str(timeout_ms)
+
+    evt=None
+    while elapsed_ms < timeout_ms and evt is None:
+        nSamples, nEvents2 = ftc.wait(-1,procnEvents, timeout_ms - elapsed_ms)
+
+        if nEvents != nEvents2: # new events to process
+            procnEvents = nEvents2
+            evts = ftc.getEvents((nEvents, nEvents2 -1))
+            evts = filter(lambda x: x.type in evtype,evts)
+            if len(evts) > 0:
+                evt=evts
+
+        elapsed_ms = (time() - start)*1000
+        nEvents = nEvents2
+    return evt
 
 def waitforevent(trigger, timeout=1000,verbose = True):
     """Function that blocks until a certain event is sent. Trigger defines what
@@ -273,9 +300,8 @@ def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose = True):
 
         if nEvents != nEvents2:
             e = ftc.getEvents((nEvents, nEvents2 -1))
-            nEvents = nEvents2
-
             stopevents = stopFilter(e)
+            nEvents = nEvents2
 
             if stopevents:
                 stillgathering = False
