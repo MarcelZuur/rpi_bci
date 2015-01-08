@@ -17,7 +17,7 @@ bufhelp.connect()
 logreg = linear_model.LogisticRegression()
 
 #param
-trlen_ms = 600
+trlen_ms = 2000
 
 run = True
 while run:
