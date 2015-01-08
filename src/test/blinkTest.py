@@ -16,19 +16,19 @@ GPIO.setup(pins[2], GPIO.OUT)
 GPIO.setup(pins[3], GPIO.OUT)
 
 #TODO: convert to frequency and duration
-def blink(symbol, nTimes, speed):
+def blink(symbol, nTimes, delay):
         for i in range(0, nTimes):
                 print "led ON"
                 GPIO.output(pins[symbol], True)
-                time.sleep(speed)
+                time.sleep(delay)
                 GPIO.output(pins[symbol], False)
                 print "led OFF"
-                time.sleep(speed)
+                time.sleep(delay)
         GPIO.cleanup()
 
 
 def test():
         nTimes = 5
-        speed = 0.5 #seconds
+        frequency = 10
         symbol = 0
-        blink(symbol, nTimes, speed)
+        blink(symbol, nTimes, 1/frequency)

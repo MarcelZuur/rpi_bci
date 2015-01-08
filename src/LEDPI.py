@@ -2,6 +2,7 @@
 import time
 import RPi.GPIO as GPIO
 
+
 class LEDPI():
     def blinkLED(self):
         newTime = [0] * len(self.millis)
@@ -25,21 +26,17 @@ class LEDPI():
     def __init__(self, pins):
         self.pins = pins
         self.blink = True
-        self.millis = []
-
+        self.millis = [0] * len(pins)
         GPIO.setmode(GPIO.BOARD)
         # pins[3] = 10
         for idx in range(0, len(pins)):
             GPIO.setup(pins[idx], GPIO.OUT)
-
-        self.changeLED([12, 0, 18])
-        self.blink = True
-        self.blinkLED()
+            GPIO.output(pins[idx], False)
 
     def changeLED(self, frequencies):
         self.flipLED = [False] * len(frequencies)
-        for freq in frequencies:
-            self.millis.append(1000 / freq if freq >0 else 0)
+        for idx, freq in enumerate(frequencies):
+            self.millis[idx]=(1000 / freq if freq >0 else 0)
 
     def update(self, model):
         pass
