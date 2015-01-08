@@ -37,11 +37,12 @@ bufhelp.sendevent('stimulus.training', 'start')
 for i in xrange(nSequences):
     for j in xrange(nEpochs):
         symbol = stimuli[i, j]
-        bufhelp.sendevent('stimulus.visible', symbol)
         frequencies_led=[0,0,0]
         if symbol < 3:
             frequencies_led[symbol] = frequencies[symbol]
         leds.changeLED(frequencies_led)
+        time.sleep(stimulusDuration)
+        bufhelp.sendevent('stimulus.visible', symbol)
         time.sleep(stimulusDuration)
         frequencies_led=[0,0,0]
         leds.changeLED(frequencies_led)
@@ -54,9 +55,9 @@ bufhelp.sendevent('stimulus.training', 'end')
 leds.blink = False
 print("calibration END")
 
-time.sleep(1)
-print("train classifier")
-bufhelp.sendevent('startPhase.cmd', 'train')
-print("wait for classifier")
+#time.sleep(1)
+#print("train classifier")
+#bufhelp.sendevent('startPhase.cmd', 'train')
+#print("wait for classifier")
 #bufhelp.waitnewevents(("sigproc.training","done"))
 #bufhelp.sendevent('startPhase.cmd', 'exit')
