@@ -490,13 +490,14 @@ class Client:
                 indE = indS
             else:
                 indE = int(indices[-1])
-            if indE > indS :
+            if indE < indS :
                 return None
             request = struct.pack('HHIII', VERSION, GET_EVT, 8, indS, indE)
         self.sendRaw(request)
 
         (status, bufsize, resp_buf) = self.receiveResponse()
         if status == GET_ERR:
+            raise IOError('Bad response from buffer server')
             return []
 
         if status != GET_OK:

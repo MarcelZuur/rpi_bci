@@ -25,7 +25,6 @@ while run:
     e = bufhelp.waitforevent("startPhase.cmd",1000, False)
 
     if e is not None:
-
         if e.value == "calibration":
             print "Calibration phase"
             data, events, stopevents = bufhelp.gatherdata("stimulus.visible",trlen_ms,("stimulus.training","end"), milliseconds=True)
@@ -36,11 +35,12 @@ while run:
             data = preproc.detrend(data)
             data, badch = preproc.badchannelremoval(data)
             data = preproc.spatialfilter(data)
-            data = preproc.spectrum(data, bufhelp.fSample, dim=1)
+            #data = preproc.spectrum(data, bufhelp.fSample, dim=1)
             #data = preproc.spectralfilter(data, (0, .1, 10, 12), bufhelp.fSample) #TODO: focus on the pre-defined frequencies.
             data, events, badtrials = preproc.badtrailremoval(data, events)
             mapping = {('stimulus.visible', '0'): 0, ('stimulus.visible', '1'): 1} #TODO: no mapping?, include all classes.
             logreg.fit(data,events) #TODO: proper format
+            predictions = logreg.predict(data)
             #linear.fit(data,events,mapping)
             bufhelp.update()
             bufhelp.sendevent("sigproc.training","done")
