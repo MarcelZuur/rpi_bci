@@ -1,20 +1,18 @@
 #!/usr/bin/python
 import sys
 
-from network import bufhelp, preproc
-
-
+from network import bufhelp
+from src.Classifier import Classifier
 sys.path.append("../../dataAcq/buffer/python")
 sys.path.append("../signalProc")
-#import linear
 import pickle
-from sklearn import linear_model
+import numpy as np
 
 #connect
 bufhelp.connect()
 
 #model init
-logreg = linear_model.LogisticRegression()
+classifier = Classifier()
 
 #param
 trlen_ms = 2000
@@ -22,51 +20,44 @@ trlen_ms = 2000
 run = True
 while run:
     print "Waiting for startPhase.cmd event."
-    e = bufhelp.waitforevent("startPhase.cmd",1000, False)
+    e = bufhelp.waitforevent("startPhase.cmd", 1000, False)
 
     if e is not None:
         if e.value == "calibration":
             print "Calibration phase"
             data, events, stopevents = bufhelp.gatherdata("stimulus.visible",trlen_ms,("stimulus.training","end"), milliseconds=True)
-            pickle.dump({"events":events,"data":data}, open("subject_data", "w"))
+            with open("subject_data", "wb") as f:
+                pickle.dump({"events":events,"data":data}, f)
 
         elif e.value == "train":
             print "Training classifier"
-            data = preproc.detrend(data)
-            data, badch = preproc.badchannelremoval(data)
-            data = preproc.spatialfilter(data)
-            data = preproc.spectrum(data, bufhelp.fSample, dim=1)
-            #data = preproc.spectralfilter(data, (0, .1, 10, 12), bufhelp.fSample) #TODO: focus on the pre-defined frequencies.
-            data, events, badtrials = preproc.badtrailremoval(data, events)
-            mapping = {('stimulus.visible', '0'): 0, ('stimulus.visible', '1'): 1} #TODO: no mapping?, include all classes.
-            logreg.fit(data,events) #TODO: proper format
-            predictions = logreg.predict(data)
-            #linear.fit(data,events,mapping)
+            with open("subject_data", "rb") as f:
+                data_tuple = np.load(f)
+                data = data_tuple['data']
+                events = data_tuple['events']
+            classifier.train(data,events)
             bufhelp.update()
-            bufhelp.sendevent("sigproc.training","done")
+            bufhelp.sendevent("sigproc.training","end")
 
-        elif e.value =="testing": #TODO: check all, move different file?
+        elif e.value =="feedback":
             print "Feedback phase"
             while True:
-                data, events, stopevents = bufhelp.gatherdata(["stimulus.columnFlash","stimulus.rowFlash"],trlen_ms,[("stimulus.feedback","end"), ("stimulus.sequence","end")], milliseconds=True)
+                data, events, stopevents = bufhelp.gatherdata("robot.start", trlen_ms,[("robot.stop",1), ("stimulus.feedback","end")], milliseconds=True, time_trigger=True)
 
                 if isinstance(stopevents, list):
                     if any(map(lambda x: "stimulus.feedback" in x.type, stopevents)):
+                        bufhelp.sendevent("sigproc.feedback","end")
                         break
                 else:
                     if "stimulus.feedback" in stopevents.type:
+                        bufhelp.sendevent("sigproc.feedback","end")
                         break
 
-                data = preproc.detrend(data)
-                data, badch = preproc.badchannelremoval(data)
-                data = preproc.spatialfilter(data)
-                data = preproc.spectralfilter(data, (0, .1, 10, 12), bufhelp.fSample)#TODO: check
-                data2, events, badtrials = preproc.badtrailremoval(data, events)
-
-                predictions = logreg.predict(data,events) #TODO: proper format
-                #predictions = linear.predict(data)
-
-                bufhelp.sendevent("classifier.prediction",predictions)
+                print "get prediction"
+                predictions = classifier.predict(data).tolist()
+                bufhelp.update()
+                bufhelp.sendevent("classifier.predictions", predictions)
 
         elif e.value =="exit":
+            bufhelp.sendevent("sigproc","exit")
             run = False

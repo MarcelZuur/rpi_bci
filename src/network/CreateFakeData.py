@@ -1,8 +1,7 @@
 import threading
 import numpy as np
 import time
-from LEDPI import LEDPI
-from network import bufhelp
+import bufhelp
 
 #connect to buffer
 bufhelp.connect()
@@ -10,8 +9,8 @@ print("connected")
 
 #init stimuli
 nSymbols = 4
-nSequences = 6
-nEpochs = 15
+nSequences = 4
+nEpochs = 5
 interEpochDelay = 1
 stimulusDuration = 3
 stimulusEventDelay = 1
@@ -25,9 +24,6 @@ frequencies[0] = 13
 frequencies[1] = 17
 frequencies[2] = 21
 frequencies[3] = 25
-leds=LEDPI([11, 13, 15])
-t1 = threading.Thread(target=leds.blinkLED)
-t1.start()
 
 #start stimuli
 print("calibration START")
@@ -40,17 +36,14 @@ for i in xrange(nSequences):
         frequencies_led=[0,0,0]
         if symbol < 3:
             frequencies_led[symbol] = frequencies[symbol]
-        leds.changeLED(frequencies_led)
         time.sleep(stimulusEventDelay)
         bufhelp.sendevent('stimulus.visible', symbol)
         time.sleep(stimulusDuration)
         frequencies_led=[0,0,0]
-        leds.changeLED(frequencies_led)
         bufhelp.sendevent('stimulus.epoch', 'end')
         time.sleep(interEpochDelay)
     bufhelp.sendevent('stimulus.sequence', 'end')
     time.sleep(interSequenceDelay)
 
 bufhelp.sendevent('stimulus.training', 'end')
-leds.blink = False
 print("calibration END")

@@ -132,8 +132,8 @@ def spatialfilter(data, type="car",whitencutoff=1e-15):
         raise Exception("data should be a numpy array or list of numpy arrays.")
         
     if type=="car":
-        
-        X = numpy.dot(numpy.eye(X.shape[0])-(1.0/X.shape[0]),X)
+        eye=numpy.eye(X.shape[0])-(1.0/X.shape[0])
+        X = numpy.dot(eye,X)
         
     elif type=="whiten":
         
@@ -640,7 +640,7 @@ def badtrailremoval(data, events = None, threshold = (None,3.1)):
     else:
         raise Exception("data should be a numpy array or list of numpy arrays.")
     
-def outlierdetection(X, dim=0, threshold=(None,3), maxIter=3, feat="var"):
+def outlierdetection(X, dim=0, threshold=(None,3), maxIter=1, feat="var"):
     '''Removes outliers from X. Based on idOutliers.m
     
     Removes outliers from X based on robust coviarance variance/mean 
@@ -700,7 +700,8 @@ def outlierdetection(X, dim=0, threshold=(None,3), maxIter=3, feat="var"):
             break
         else:
             outliers = outliers + list(inliers[bad])
-            inliers = inliers[[ not x for x in bad]]
+            #inliers = inliers[[ not x for x in bad]]
+            inliers = numpy.delete(inliers, inliers[bad])
     
     return (list(inliers), outliers)
     

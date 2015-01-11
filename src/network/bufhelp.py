@@ -246,7 +246,7 @@ def createeventfilter(trigger):
 
     return func
 
-def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose = True):
+def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose = True, time_trigger=False):
     """Gathers data and returns a list of data and triggering events. The
     arguments trigger and stroptrigger are used to create event filters (using
     the function createeventfilter).
@@ -307,6 +307,9 @@ def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose = True):
                 stillgathering = False
                 if len(stopevents) == 1:
                     stopevents = stopevents[0]
+
+            if time_trigger:
+                stillgathering = False
 
             e = gatherFilter(e)
 
