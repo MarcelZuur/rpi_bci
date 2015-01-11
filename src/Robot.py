@@ -1,10 +1,9 @@
 from nxt.brick import Brick
 from nxt.locator import find_one_brick
-from nxt.motor import Motor, PORT_A, PORT_B, PORT_C
+from nxt.motor import Motor, PORT_A, PORT_B, PORT_C, SynchronizedMotors
 from nxt.sensor import Touch
 from nxt.sensor import PORT_1, PORT_2, PORT_3, PORT_4
-
-__author__ = 'PAUL'
+import time
 
 
 class Robot():
@@ -12,19 +11,23 @@ class Robot():
     def __init__(self):
         self.brick = find_one_brick()
         self.sensors = [Touch(self.brick, PORT_1)]
-        self.motors = [Motor(self.brick, PORT_A), Motor(self.brick, PORT_C)]
+        self.motors = [Motor(self.brick, PORT_A), Motor(self.brick, PORT_B)]
+        self.motors_both = SynchronizedMotors(self.motors[0], self.motors[1], 0)
 
-    def increase_velocity(self):
-        pass
+    def move_forward(self):
+        #self.motors_both.idle()
+        self.motors_both.run(75)
 
-    def decrease_velocity(self):
-        pass
+    def stop(self):
+        self.motors_both.idle()
 
     def turn_left(self):
-        pass
+        self.motors[0].run(100)
+        self.motors[1].run(75)
 
     def turn_right(self):
-        pass
+        self.motors[1].run(100)
+        self.motors[0].run(75)
 
     def beep(self, frequency=523):
         self.brick.play_tone_and_wait(frequency, 500)

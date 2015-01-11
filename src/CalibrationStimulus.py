@@ -14,7 +14,8 @@ nSequences = 6
 nEpochs = 15
 interEpochDelay = 1
 stimulusDuration = 3
-stimulusEventDelay = 1
+stimulusEventDelay = 0.1
+stimulusFullDuration = 1
 interSequenceDelay = 1
 np.random.seed(0)
 stimuli = np.random.randint(nSymbols, size=(nSequences, nEpochs)) #TODO: less random
@@ -25,9 +26,12 @@ frequencies[0] = 13
 frequencies[1] = 17
 frequencies[2] = 21
 frequencies[3] = 25
+frequency_full = 100
 leds=LEDPI([11, 13, 15])
 t1 = threading.Thread(target=leds.blinkLED)
 t1.start()
+frequencies_led=frequencies[0:3].tolist()
+leds.changeLED(frequencies_led)
 
 #start stimuli
 print("calibration START")
@@ -39,15 +43,25 @@ for i in xrange(nSequences):
         symbol = stimuli[i, j]
         frequencies_led=[0,0,0]
         if symbol < 3:
-            frequencies_led[symbol] = frequencies[symbol]
+            frequencies_led=frequencies[0:3].tolist()
+            frequencies_led[symbol] = frequency_full
+        leds.changeLED(frequencies_led)
+
+        time.sleep(stimulusFullDuration)
+
+        if symbol < 3:
+            frequencies_led=frequencies[0:3].tolist()
         leds.changeLED(frequencies_led)
         time.sleep(stimulusEventDelay)
         bufhelp.sendevent('stimulus.visible', symbol)
+
         time.sleep(stimulusDuration)
+
         frequencies_led=[0,0,0]
         leds.changeLED(frequencies_led)
         bufhelp.sendevent('stimulus.epoch', 'end')
         time.sleep(interEpochDelay)
+
     bufhelp.sendevent('stimulus.sequence', 'end')
     time.sleep(interSequenceDelay)
 

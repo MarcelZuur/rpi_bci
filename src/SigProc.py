@@ -12,7 +12,7 @@ import numpy as np
 bufhelp.connect()
 
 #model init
-classifier = Classifier()
+classifier = Classifier(bufhelp.fSample)
 
 #param
 trlen_ms = 2000
@@ -35,7 +35,12 @@ while run:
                 data_tuple = np.load(f)
                 data = data_tuple['data']
                 events = data_tuple['events']
+
             classifier.train(data,events)
+
+            with open("subject_classifier", "wb") as f:
+                pickle.dump({"model":classifier.optimal_model}, f)
+
             bufhelp.update()
             bufhelp.sendevent("sigproc.training","end")
 
@@ -54,9 +59,16 @@ while run:
                         break
 
                 print "get prediction"
-                predictions = classifier.predict(data).tolist()
-                bufhelp.update()
-                bufhelp.sendevent("classifier.predictions", predictions)
+                if classifier.optimal_model is None:
+                    with open("subject_classifier", "rb") as f:
+                        classifier.optimal_model = np.load(f)['model']
+
+                if data:
+                    predictions = classifier.predict(data).tolist()
+                    bufhelp.update()
+                    bufhelp.sendevent("classifier.predictions", predictions)
+                else:
+                    print("ERROR: NO DATA")
 
         elif e.value =="exit":
             bufhelp.sendevent("sigproc","exit")

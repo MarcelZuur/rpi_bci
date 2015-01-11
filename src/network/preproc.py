@@ -185,7 +185,13 @@ def fouriertransform(data, fSample, dim=0):
         
         for k in range(0,len(data)):
             data = dataclone[k]
+            #freqs2, ps2 = scipy.signal.welch(data, fs=fSample, axis=dim, scaling='spectrum') #FIXME: detrend false
             ft = numpy.abs(numpy.fft.fft(data, axis=dim))**2
+            #ft1 = numpy.abs(numpy.fft.fft(data[0:data.shape[0]/2], axis=dim))**2
+            #ft2 = numpy.abs(numpy.fft.fft(data[data.shape[0]/2:data.shape[0]], axis=dim))**2
+            #ft3 = numpy.abs(numpy.fft.fft(data[data.shape[0]/4:data.shape[0]/4+data.shape[0]/2], axis=dim))**2
+            #ft=ft1+ft2+ft3
+            #ft/=3
             freqs = numpy.fft.fftfreq(data.shape[0], 1.0/fSample)
             idx = [i for i in numpy.argsort(freqs) if freqs[i] >= 0]
     
