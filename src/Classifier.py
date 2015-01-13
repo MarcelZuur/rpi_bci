@@ -1,6 +1,7 @@
 import StringIO
 import numpy as np
 import scipy
+from sklearn import svm, preprocessing
 from sklearn.grid_search import GridSearchCV
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.metrics import metrics
@@ -10,16 +11,18 @@ import pickle
 
 class Classifier():
 
-    def __init__(self, fsample=100.0):
+    def __init__(self, fsample=250.0, channel_idxs=np.arange(0,10)):
         n_cv_folds = 3
-        c_grid = [0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]
+        c_grid = [0.001, 0.01, 1, 10]
         model = LogisticRegression(C = 1.0, penalty = 'l1',  random_state=0)
         #model = SGDClassifier(loss='log', penalty='l1', random_state=0)
+        #model = svm.SVC(kernel='linear', verbose=False, max_iter=1000000)
         self.clf = GridSearchCV(model, param_grid={'C': c_grid}, cv=n_cv_folds,
                            scoring = 'accuracy')
         self.events = None
         self.fsample = fsample
         self.optimal_model = None
+        self.channel_idxs = channel_idxs
 
     def _preprocess(self, data, events=None):
         data = preproc.detrend(data)
@@ -37,11 +40,12 @@ class Classifier():
     def _convert_data(self, data):
         spectrum = preproc.spectrum(data, self.fsample)
         spectrum = np.array(spectrum)
-        boolean_indexes = np.logical_and(spectrum > 11, spectrum < 31)
+        boolean_indexes = spectrum > 3
         indexes = np.array(np.where(boolean_indexes)[0]).astype(np.int32)
 
-        X=np.array(data, dtype=np.float32)
-        X = np.ascontiguousarray(X[:,indexes, :]) #FIXME: focus on the pre-defined frequencies?
+        X = np.array(data, dtype=np.float32)
+        X = np.ascontiguousarray(X[:, indexes, :]) #FIXME: focus on the pre-defined frequencies?
+        X = np.ascontiguousarray(X[:, :, self.channel_idxs])
         X.shape=(X.shape[0], X.shape[1] * X.shape[2])
         return X
 
@@ -72,27 +76,30 @@ class Classifier():
             plt.gray()
             spectrum = preproc.spectrum(data, classifier.fsample)
             spectrum = np.array(spectrum).astype(np.int32)
-            indexes = np.array(np.where(np.logical_and(spectrum > 9, spectrum < 29))[0]).astype(np.int32)
+            #indexes = np.array(np.where(np.logical_and(spectrum > 9, spectrum < 29))[0]).astype(np.int32)
             plt.imshow(coefs_matrix[i].T, interpolation='nearest')
         plt.show()
 
 
 if __name__ == '__main__':
-    classifier = Classifier()
     with open("subject2_data", "rb") as f:
         data_tuple = np.load(f)
         data = data_tuple['data']
         events = data_tuple['events']
-    classifier.train(data[0:50], events[0:50])
-    predictions = classifier.predict(data[51:90])
+
+    for i in range(1):
+        print(i)
+        classifier = Classifier()
+        classifier.train(data[0:len(data)/2], events[0:len(data)/2])
+
+    predictions = classifier.predict(data[len(data)/2:len(data)])
     print(predictions)
 
     #training accuracy
-    y = classifier._convert_events(events[51:90])
+    y = classifier._convert_events(events[len(data)/2:len(data)])
     print(y)
     assert len(predictions)==len(y)
     print("test accuracy: ", np.sum(predictions==y)/float(y.shape[0]))
-    print("test accuracy excluding stop: ", np.sum(predictions[predictions!=3]==y[predictions!=3])/float(y[predictions!=3].shape[0]))
 
     data_array = np.array(data)
 
@@ -103,5 +110,5 @@ if __name__ == '__main__':
         model = np.load(f)['model']
 
     assert (model.coef_==classifier.optimal_model.coef_).all()
-    coefs_matrix=model.coef_.reshape(4, model.coef_.shape[1]/data_array.shape[2], data_array.shape[2])
+    coefs_matrix=model.coef_.reshape(4, model.coef_.shape[1]/10, 10)
     classifier.plot_model(data, classifier)

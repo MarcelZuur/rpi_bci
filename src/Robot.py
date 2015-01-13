@@ -12,22 +12,22 @@ class Robot():
         self.brick = find_one_brick()
         self.sensors = [Touch(self.brick, PORT_1)]
         self.motors = [Motor(self.brick, PORT_A), Motor(self.brick, PORT_B)]
-        self.motors_both = SynchronizedMotors(self.motors[0], self.motors[1], 0)
+        #self.motors_both = SynchronizedMotors(self.motors[0], self.motors[1], 0)
 
     def move_forward(self):
-        #self.motors_both.idle()
-        self.motors_both.run(75)
+        both=SynchronizedMotors(self.motors[0], self.motors[1], 0)
+        both.turn(-70, 2*250)
 
     def stop(self):
         self.motors_both.idle()
 
     def turn_left(self):
-        self.motors[0].run(100)
-        self.motors[1].run(75)
+        both=SynchronizedMotors(self.motors[0], self.motors[1], 20)
+        both.turn(-70, 250)
 
     def turn_right(self):
-        self.motors[1].run(100)
-        self.motors[0].run(75)
+        both=SynchronizedMotors(self.motors[1], self.motors[0], 20)
+        both.turn(-70, 250)
 
     def beep(self, frequency=523):
         self.brick.play_tone_and_wait(frequency, 500)

@@ -2,7 +2,7 @@
 import sys
 
 from network import bufhelp
-from src.Classifier import Classifier
+from Classifier import Classifier
 sys.path.append("../../dataAcq/buffer/python")
 sys.path.append("../signalProc")
 import pickle
@@ -13,6 +13,7 @@ bufhelp.connect()
 
 #model init
 classifier = Classifier(bufhelp.fSample)
+print(bufhelp.fSample)
 
 #param
 trlen_ms = 2000
