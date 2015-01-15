@@ -29,7 +29,6 @@ class Classifier():
     def _convert_data(self, data):
         X = np.array(data, dtype=np.float32)
         freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend='linear', window='hanning',)
-
         freqs_idxs = freqs > 0
 
         X = np.ascontiguousarray(X[:, freqs_idxs, :])
@@ -69,6 +68,20 @@ class Classifier():
             plt.imshow(coefs_matrix[i].T, interpolation='nearest')
         plt.show()
 
+    def plot_data(self, data, events):
+        X = np.array(data, dtype=np.float32)
+        y = self._convert_events(events)
+        freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend='linear', window='hanning',)
+        from matplotlib import pyplot as plt
+        for i in range(3):
+            X_avg = np.mean(X[y==i],axis=2)
+            X_avg = np.mean(X_avg, axis=0)
+            plt.subplot(2, 2, i)
+            plt.semilogy(freqs, np.sqrt(X_avg))
+            plt.xlabel('frequency [Hz]')
+            plt.ylabel('Linear spectrum [V RMS]')
+        plt.show()
+
 
 if __name__ == '__main__':
     with open("subject2_data", "rb") as f:
@@ -79,6 +92,7 @@ if __name__ == '__main__':
     for i in range(1):
         print(i)
         classifier = Classifier()
+        classifier.plot_data(data, events)
         classifier.train(data[0:len(data)/2], events[0:len(data)/2])
 
     predictions = classifier.predict(data[len(data)/2:len(data)])

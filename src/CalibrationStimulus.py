@@ -11,9 +11,9 @@ print("connected")
 
 #init stimuli
 nSymbols = 4
-nSequences = 6
-nEpochs = 15
-interEpochDelay = 1
+nSequences = 3
+nEpochs = nSymbols*4
+interEpochDelay = 0.5
 stimulusDuration = 3
 stimulusEventDelay = 0.5
 stimulusFullDuration = 2
@@ -23,11 +23,11 @@ stimuli = np.random.randint(nSymbols, size=(nSequences, nEpochs)) #TODO: less ra
 
 #init frequencies
 frequencies = np.zeros(nSymbols)
-frequencies[0] = 13
+frequencies[0] = 11
 frequencies[1] = 17
-frequencies[2] = 21
-frequencies[3] = 25
-frequency_full = 100
+frequencies[2] = 23
+#frequencies[3] = 25
+frequency_full = 0
 leds=LEDPI([13, 15, 11])
 t1 = threading.Thread(target=leds.blinkLED)
 t1.start()
@@ -60,10 +60,10 @@ for i in xrange(nSequences):
         bufhelp.sendevent('stimulus.visible', symbol)
         time.sleep(stimulusDuration)
 
-        bufhelp.sendevent('stimulus.epoch', 'end')
+        print('stimulus.epoch', 'end')
         time.sleep(interEpochDelay)
 
-    bufhelp.sendevent('stimulus.sequence', 'end')
+    print('stimulus.sequence', 'end')
     frequencies_led=[0,0,0]
     leds.changeLED(frequencies_led)
     time.sleep(interSequenceDelay)

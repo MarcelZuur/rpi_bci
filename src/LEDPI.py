@@ -36,7 +36,7 @@ class LEDPI():
     def changeLED(self, frequencies):
         self.flipLED = [False] * len(frequencies)
         for idx, freq in enumerate(frequencies):
-            self.millis[idx]=(1000 / freq if freq >0 else 0)
+            self.millis[idx]=(500 / freq if freq >0 else 0)
 
     def update(self, model):
         pass

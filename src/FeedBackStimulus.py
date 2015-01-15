@@ -19,10 +19,10 @@ buffer_size = 3
 
 #init frequencies
 frequencies = np.zeros(nSymbols)
-frequencies[0] = 13 #LEFT
+frequencies[0] = 11 #LEFT
 frequencies[1] = 17 #FORWARD
-frequencies[2] = 21 #RIGHT
-frequencies[3] = 25 #STOP
+frequencies[2] = 23 #RIGHT
+#frequencies[3] = 25 #STOP
 leds=LEDPI([13, 15, 11])
 t1 = threading.Thread(target=leds.blinkLED)
 t1.start()

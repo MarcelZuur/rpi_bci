@@ -40,7 +40,7 @@ class Classifier():
     def _convert_data(self, data):
         spectrum = preproc.spectrum(data, self.fsample)
         spectrum = np.array(spectrum)
-        boolean_indexes = spectrum > 3
+        boolean_indexes = spectrum > 6
         indexes = np.array(np.where(boolean_indexes)[0]).astype(np.int32)
 
         X = np.array(data, dtype=np.float32)

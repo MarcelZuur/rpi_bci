@@ -24,7 +24,7 @@ def connect(header=True, verbose = True):
             try:
                 split = adress.split(":")
                 adress = split[0]
-                port = int(split(1))
+                port = int(split[1])
             except ValueError:
                 print "Invalid port formatting " + split[1]
             except IndexError:
