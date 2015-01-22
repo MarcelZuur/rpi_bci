@@ -25,7 +25,7 @@ class Classifier():
         self.channel_idxs = channel_idxs
 
     def _preprocess(self, data, events=None):
-        data = preproc.detrend(data)
+        #data = preproc.detrend(data)
         data, badch = preproc.badchannelremoval(data)
         for i in range(len(data)):
             data[i]=(preproc.spatialfilter(data[i]))
@@ -82,7 +82,7 @@ class Classifier():
 
 
 if __name__ == '__main__':
-    with open("subject2_data", "rb") as f:
+    with open("subject_data", "rb") as f:
         data_tuple = np.load(f)
         data = data_tuple['data']
         events = data_tuple['events']

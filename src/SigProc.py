@@ -12,8 +12,7 @@ import numpy as np
 bufhelp.connect()
 
 #model init
-classifier = Classifier(bufhelp.fSample)
-print(bufhelp.fSample)
+classifier = Classifier(127.0)
 
 #param
 trlen_ms = 2000
@@ -27,6 +26,7 @@ while run:
         if e.value == "calibration":
             print "Calibration phase"
             data, events, stopevents = bufhelp.gatherdata("stimulus.visible",trlen_ms,("stimulus.training","end"), milliseconds=True)
+            print "end"
             with open("subject_data", "wb") as f:
                 pickle.dump({"events":events,"data":data}, f)
 

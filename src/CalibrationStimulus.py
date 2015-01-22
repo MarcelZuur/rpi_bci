@@ -6,29 +6,28 @@ from network import bufhelp
 
 #connect to buffer
 bufhelp.connect()
-print(bufhelp.fSample)
 print("connected")
 
 #init stimuli
 nSymbols = 4
-nSequences = 3
-nEpochs = nSymbols*4
-interEpochDelay = 0.5
+nSequences = 6
+nEpochs = 15
+interEpochDelay = 1
 stimulusDuration = 3
-stimulusEventDelay = 0.5
-stimulusFullDuration = 2
-interSequenceDelay = 5
+stimulusEventDelay = 0.1
+stimulusFullDuration = 1
+interSequenceDelay = 1
 np.random.seed(0)
 stimuli = np.random.randint(nSymbols, size=(nSequences, nEpochs)) #TODO: less random
 
 #init frequencies
 frequencies = np.zeros(nSymbols)
-frequencies[0] = 11
-frequencies[1] = 17
-frequencies[2] = 23
+frequencies[0] = 9
+frequencies[1] = 13
+frequencies[2] = 17
 #frequencies[3] = 25
-frequency_full = 0
-leds=LEDPI([13, 15, 11])
+frequency_full = 100
+leds=LEDPI([11, 13, 15])
 t1 = threading.Thread(target=leds.blinkLED)
 t1.start()
 frequencies_led=frequencies[0:3].tolist()
@@ -42,30 +41,33 @@ bufhelp.sendevent('stimulus.training', 'start')
 for i in xrange(nSequences):
     for j in xrange(nEpochs):
         symbol = stimuli[i, j]
-        frequencies_led=[0,0,0]
+        frequencies_led=frequencies[0:3].tolist()
+        #frequencies_led=[0,0,0]
         if symbol < 3:
-            #frequencies_led=frequencies[0:3].tolist()
-            frequencies_led[symbol] = frequency_full
+            frequencies_led[symbol] = 0
         else:
-            frequencies_led[0] = frequency_full
-            frequencies_led[1] = frequency_full
-            frequencies_led[2] = frequency_full
-        leds.changeLED(frequencies_led)
+            frequencies_led=[0,0,0]
 
+        leds.changeLED(frequencies_led)
         time.sleep(stimulusFullDuration)
 
-        frequencies_led=frequencies[0:3].tolist()
+        if symbol < 3:
+            frequencies_led=frequencies[0:3].tolist()
+        else:
+            frequencies_led=[0,0,0]
+
         leds.changeLED(frequencies_led)
         time.sleep(stimulusEventDelay)
         bufhelp.sendevent('stimulus.visible', symbol)
+
         time.sleep(stimulusDuration)
 
-        print('stimulus.epoch', 'end')
-        time.sleep(interEpochDelay)
+        #frequencies_led=[0,0,0]
+        #leds.changeLED(frequencies_led)
+        #bufhelp.sendevent('stimulus.epoch', 'end')
+        #time.sleep(interEpochDelay)
 
-    print('stimulus.sequence', 'end')
-    frequencies_led=[0,0,0]
-    leds.changeLED(frequencies_led)
+    #bufhelp.sendevent('stimulus.sequence', 'end')
     time.sleep(interSequenceDelay)
 
 bufhelp.sendevent('stimulus.training', 'end')
