@@ -17,35 +17,39 @@ class Classifier():
         model = LogisticRegression(C = 1.0, penalty = 'l1',  random_state=0)
         #model = SGDClassifier(loss='log', penalty='l1', random_state=0)
         #model = svm.SVC(kernel='linear', verbose=False, max_iter=1000000)
-        self.clf = GridSearchCV(model, param_grid={'C': c_grid}, cv=n_cv_folds,
-                           scoring = 'accuracy')
+        #self.clf = GridSearchCV(model, param_grid={'C': c_grid}, cv=n_cv_folds,
+        #                   scoring = 'accuracy')
+        self.clf = svm.LinearSVC()
         self.events = None
         self.fsample = fsample
-        self.optimal_model = None
+        self.optimal_model = self.clf
         self.channel_idxs = channel_idxs
 
     def _preprocess(self, data, events=None):
         #data = preproc.detrend(data)
         data, badch = preproc.badchannelremoval(data)
-        for i in range(len(data)):
-            data[i]=(preproc.spatialfilter(data[i]))
+        #for i in range(len(data)):
+        #    data[i]=(preproc.spatialfilter(data[i]))
 
-        data = preproc.fouriertransform(data, self.fsample)
+        #data = preproc.fouriertransform(data, self.fsample)
+        data, badch = preproc.badchannelremoval(data,range(23,47,1))
+        data, badch = preproc.badchannelremoval(data,range(1,8,1))
 
-        if events is not None:
-            data, events, badtrials = preproc.badtrailremoval(data, events) #FIXME: check outlierdetection iterValue
-            self.events = events
+        data = preproc.spectralfilter(data,[1,5,80,85], 250.0) #TODO: focus on the pre-defined frequencies.
+        #if events is not None:
+        #    data, events, badtrials = preproc.badtrailremoval(data, events) #FIXME: check outlierdetection iterValue
+        #    self.events = events
         return data, events
 
     def _convert_data(self, data):
-        spectrum = preproc.spectrum(data, self.fsample)
-        spectrum = np.array(spectrum)
-        boolean_indexes = spectrum > 6
-        indexes = np.array(np.where(boolean_indexes)[0]).astype(np.int32)
+        #spectrum = preproc.spectrum(data, self.fsample)
+        #spectrum = np.array(spectrum)
+        #boolean_indexes = spectrum > 6
+        #indexes = np.array(np.where(boolean_indexes)[0]).astype(np.int32)
 
         X = np.array(data, dtype=np.float32)
-        X = np.ascontiguousarray(X[:, indexes, :]) #FIXME: focus on the pre-defined frequencies?
-        X = np.ascontiguousarray(X[:, :, self.channel_idxs])
+        #X = np.ascontiguousarray(X[:, indexes, :]) #FIXME: focus on the pre-defined frequencies?
+        #X = np.ascontiguousarray(X[:, :, self.channel_idxs])
         X.shape=(X.shape[0], X.shape[1] * X.shape[2])
         return X
 
@@ -60,9 +64,10 @@ class Classifier():
         X = self._convert_data(data)
         y = self._convert_events(events)
         self.clf.fit(X,y)
-        print(self.clf.best_params_, self.clf.best_score_)
-        self.optimal_model = self.clf.best_estimator_
-        return self.clf.best_score_
+        #print(self.clf.best_params_, self.clf.best_score_)
+        # print self.clf.fit
+        self.optimal_model = self.clf
+        #   return self.clf.best_score_
 
     def predict(self, data):
         data, events = self._preprocess(data)
@@ -82,7 +87,7 @@ class Classifier():
 
 
 if __name__ == '__main__':
-    with open("subject_data", "rb") as f:
+    with open("subject_data_marcel1", "rb") as f:
         data_tuple = np.load(f)
         data = data_tuple['data']
         events = data_tuple['events']
