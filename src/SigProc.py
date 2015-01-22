@@ -12,7 +12,7 @@ import numpy as np
 bufhelp.connect()
 
 #model init
-classifier = Classifier(127.0)
+classifier = Classifier(250)
 
 #param
 trlen_ms = 2000
