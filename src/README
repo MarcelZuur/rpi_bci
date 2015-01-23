@@ -1,0 +1,19 @@
+# User Guide
+From the buffer_bci/dataAcq folder:
+1. Start a buffer in the buffer_bci/dataAcq folder, e.g. by running startJavaBuffer.bat for windows (startJavaBuffer.sh for linux).
+2. Start an eeg data gathering file dependent on the eeg device used, e.g startMobita when using a mobita device or startEmotiv when using an emotiv device.
+From the rpi_bci folder:
+3. Start the signal processor by running SigProc.py, this will run continuously.
+4. Start the calibration phase by running CalibrationStimulus.py, and wait for it to finish.
+5. Start the classifier training phase by running TrainClassifier.py, and wait for it to finish.
+6. Start the feedback phase by running FeedBackStimulus.py
+
+# Dependencies
+-python 2.7
+-numpy 1.9.1
+-scipy 0.15.1
+-matplotlib 1.4.2
+-scikit-learn 0.15.2
+-RPi.GPIO 0.5.9
+-nxt-python 2.2.2
+-buffer_bci https://github.com/jadref/buffer_bci

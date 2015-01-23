@@ -88,7 +88,7 @@ class Classifier():
 
 
 if __name__ == '__main__':
-    with open("subject_data_marcel1", "rb") as f:
+    with open("data\\subject_data_marcel_monday2", "rb") as f:
         data_tuple = np.load(f)
         data = data_tuple['data']
         events = data_tuple['events']

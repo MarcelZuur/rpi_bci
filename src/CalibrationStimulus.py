@@ -1,3 +1,13 @@
+"""Calibration stimulus script.
+
+This script displays the stimulus of the calibration phase, and sends messages to the buffer used by SigProc.py
+to label and gather data.
+
+Attributes:
+  nSymbols (int): number of symbols/leds used in the stimulus presentation.
+
+"""
+
 import threading
 import numpy as np
 import time
