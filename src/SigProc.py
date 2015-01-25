@@ -4,7 +4,7 @@ import sys
 from network import bufhelp
 from Classifier import SVMClassifier,LRClassifier
 import ConfigParser
-
+import json
 sys.path.append("../../dataAcq/buffer/python")
 sys.path.append("../signalProc")
 import pickle
@@ -28,15 +28,15 @@ def ConfigSectionMap(section):
 
 connectionOptions = ConfigSectionMap("Connection")
 #connect to buffer
-hostname = connectionOptions("hostname")
-port = connectionOptions("port")
-bufhelp.connect(hostname=hostname,port=port)
+hostname = connectionOptions["hostname"]
+port = int(connectionOptions["port"])
+bufhelp.connect(adress=hostname,port=port)
 
 #model init
 sigProcOption = ConfigSectionMap("SignalProcessing")
-fsample = sigProcOption("fsample")
-channels = sigProcOption("channels")
-if(sigProcOption("classifier").lower() == "lr"):
+fsample = float(sigProcOption["fsample"])
+channels = freqs = json.loads(sigProcOption["channels"])
+if(sigProcOption["classifier"].lower() == "lr"):
     classifier = LRClassifier(fsample,channels)
 else:
     classifier = SVMClassifier(fsample,channels)

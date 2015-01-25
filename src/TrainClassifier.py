@@ -1,3 +1,4 @@
+#!/usr/bin/python2.7
 import ConfigParser
 from network import bufhelp
 import time
@@ -20,10 +21,10 @@ def ConfigSectionMap(section):
 
 connectionOptions = ConfigSectionMap("Connection")
 
-hostname = connectionOptions("hostname")
-port = connectionOptions("port")
+hostname = connectionOptions["hostname"]
+port = int(connectionOptions["port"])
 #connect to buffer
-bufhelp.connect(hostname=hostname,port=port)
+bufhelp.connect(adress=hostname,port=port)
 print("connected")
 
 time.sleep(1)

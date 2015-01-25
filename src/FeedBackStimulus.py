@@ -1,5 +1,6 @@
 #!/usr/bin/python2.7
 import ConfigParser
+import json
 import threading
 import numpy as np
 import time
@@ -24,14 +25,12 @@ def ConfigSectionMap(section):
             dict1[option] = None
     return dict1
 
-try:
-    hostname = Config.get("Connection","hostname")
-    port = Config.get("Connection","port")
-except:
-    print "hostname and/or port number are not configured properly"
+connectionOptions = ConfigSectionMap("Connection")
 
+hostname = connectionOptions["hostname"]
+port = int(connectionOptions["port"])
 #connect to buffer
-bufhelp.connect(hostname=hostname,port=port)
+bufhelp.connect(adress=hostname,port=port)
 print("connected")
 
 ledOptions = ConfigSectionMap("LED")
@@ -43,14 +42,14 @@ nSymbols = 4
 buffer_size = 3
 
 #init frequencies
-freqs = ledOptions("frequencies")
+freqs = json.loads(ledOptions["frequencies"])
 frequencies = np.zeros(nSymbols)
-frequencies[0] = freqs[0] #LEFT
-frequencies[1] = freqs[1] #FORWARD
-frequencies[2] = freqs[2] #RIGHT
+frequencies[0] = int(freqs[0])
+frequencies[1] = int(freqs[1])
+frequencies[2] = int(freqs[2])
 frequencies[3] = 25 #STOP
 
-gpio = ledOptions("gpio")
+gpio = json.loads(ledOptions["gpio"])
 leds=LEDPI(gpio)
 t1 = threading.Thread(target=leds.blinkLED)
 t1.start()

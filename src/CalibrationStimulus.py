@@ -8,6 +8,7 @@ Attributes:
   nSymbols (int): number of symbols/leds used in the stimulus presentation.
 
 """
+import json
 
 import threading
 import numpy as np
@@ -36,35 +37,35 @@ connectionOptions = ConfigSectionMap("Connection")
 calibrationOptions = ConfigSectionMap("Calibration")
 ledOptions = ConfigSectionMap("LED")
 
-hostname = connectionOptions("hostname")
-port = connectionOptions("port")
+hostname = connectionOptions["hostname"]
+port = int(connectionOptions["port"])
 #connect to buffer
-bufhelp.connect(hostname=hostname,port=port)
+bufhelp.connect(adress=hostname,port=port)
 print(bufhelp.fSample)
 print("connected")
 
 #init stimuli
 nSymbols = 3
-nSequences = calibrationOptions["sequences"]
+nSequences = int(calibrationOptions["sequences"])
 nEpochs = nSymbols*5
-interEpochDelay = calibrationOptions["interEpochDelay"]
-stimulusDuration = calibrationOptions["stimulusDuration"]
-stimulusEventDelay = calibrationOptions["stimulusEventDelay"]
-stimulusFullDuration = calibrationOptions["stimulusFullDuration"]
-interSequenceDelay = calibrationOptions["interSequenceDelay"]
+interEpochDelay = float(calibrationOptions["interepochdelay"])
+stimulusDuration = float(calibrationOptions["stimulusduration"])
+stimulusEventDelay = float(calibrationOptions["stimuluseventdelay"])
+stimulusFullDuration = float(calibrationOptions["stimulusfullduration"])
+interSequenceDelay = float(calibrationOptions["intersequencedelay"])
 np.random.seed(0)
 stimuli = np.random.randint(nSymbols, size=(nSequences, nEpochs)) #TODO: less random
 
 #init frequencies
-freqs = ledOptions("frequencies")
+freqs = json.loads(ledOptions["frequencies"])
 frequencies = np.zeros(nSymbols)
-frequencies[0] = freqs[0]
-frequencies[1] = freqs[1]
-frequencies[2] = freqs[2]
+frequencies[0] = int(freqs[0])
+frequencies[1] = int(freqs[1])
+frequencies[2] = int(freqs[2])
 #frequencies[3] = 25
 frequency_full = 0
 
-gpio = ledOptions("gpio")
+gpio = json.loads(ledOptions["gpio"])
 leds=LEDPI(gpio)
 t1 = threading.Thread(target=leds.blinkLED)
 t1.start()
