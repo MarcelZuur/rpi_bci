@@ -10,6 +10,9 @@ from matplotlib import ticker
 
 
 #Base Classifier class. Contains most of the functions used for preprocessing data, training, predicting and validating.
+from network import preproc
+
+
 class Classifier(object):
     def __init__(self, fsample, channel_idxs):
         self.clf = None
@@ -17,12 +20,15 @@ class Classifier(object):
         self.channel_idxs = channel_idxs
 
     def convert_data(self, data):
+
         X = np.array(data, dtype=np.float32)
-        freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='density', detrend="linear",
+        freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend="linear",
                                       window='hann', )
         self._freqs = freqs
-        X = self.butter_bandpass_filter(X,7,45,self.fsample,order=1)
         X = np.ascontiguousarray(X[:, :, self.channel_idxs])
+        freqs_idxs = np.logical_and(freqs >= 3, freqs <=45 )
+        freqs = freqs[freqs_idxs]
+        X = np.ascontiguousarray(X[:, freqs_idxs, :])
         X.shape = (X.shape[0], X.shape[1] * X.shape[2])
         return X
 
@@ -71,7 +77,7 @@ class Classifier(object):
         X = np.array(data, dtype=np.float32)
         X = np.ascontiguousarray(X[:, :, self.channel_idxs])
         y = self.convert_events(events)
-        freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='density', detrend='linear',
+        freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend='linear',
                                       window='hann', )
         freqs_idxs = np.logical_and(freqs >= 7, freqs <= 28)
         freqs = freqs[freqs_idxs]
@@ -89,19 +95,6 @@ class Classifier(object):
             plt.title('Class '+str(i))
         plt.show()
 
-    def butter_bandpass(self,lowcut, highcut, fs, order=5):
-        nyq = 0.5 * fs
-        low = lowcut / nyq
-        high = highcut / nyq
-        b, a = butter(order, [low, high], btype='band')
-        return b, a
-
-
-    def butter_bandpass_filter(self,data, lowcut, highcut, fs, order=5):
-        b, a = self.butter_bandpass(lowcut, highcut, fs, order=order)
-        y = lfilter(b, a, data)
-        return y
-
     def validate(self,data,events):
         predictions = classifier.predict(data)
         print(predictions)
@@ -112,7 +105,7 @@ class Classifier(object):
 
 
 class LRClassifier(Classifier):
-    def __init__(self, fsample=256.0, channel_idxs=np.arange(9, 22)):
+    def __init__(self, fsample=256.0, channel_idxs=np.arange(13, 17)):
         super(LRClassifier, self).__init__(fsample, channel_idxs)
         n_cv_folds = 3
         c_grid = [0.001, 0.01, 1, 10]
@@ -125,10 +118,11 @@ class LRClassifier(Classifier):
 class SVMClassifier(Classifier):
     def __init__(self, fsample=256.0, channel_idxs=np.arange(9, 22)):
         super(SVMClassifier, self).__init__(fsample, channel_idxs)
-        self.clf= GridSearchCV(sklearn.svm.LinearSVC(), param_grid={'C': [1, 10]}, scoring="accuracy")
+        c_grid = [0.001, 0.01, 1, 10]
+        self.clf= GridSearchCV(sklearn.svm.LinearSVC(penalty="l1",dual=False),param_grid={'C': c_grid},cv = 3, scoring="accuracy")
 
 if __name__ == '__main__':
-    with open("subject_data_fran_2", "rb") as f:
+    with open("subject_data_fran_1", "rb") as f:
         data_tuple = np.load(f)
         data = data_tuple['data']
         events = data_tuple['events']
