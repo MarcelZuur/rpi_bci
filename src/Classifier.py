@@ -18,8 +18,9 @@ class Classifier(object):
 
     def convert_data(self, data):
         X = np.array(data, dtype=np.float32)
-        freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend="linear",
+        freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='density', detrend="linear",
                                       window='hann', )
+        self._freqs = freqs
         X = self.butter_bandpass_filter(X,7,45,self.fsample,order=1)
         X = np.ascontiguousarray(X[:, :, self.channel_idxs])
         X.shape = (X.shape[0], X.shape[1] * X.shape[2])
@@ -35,33 +36,42 @@ class Classifier(object):
         X = self.convert_data(data)
         Y = self.convert_events(events)
         self.clf.fit(X, Y)
+        self.optimal_model = self.clf.best_estimator_
 
     def predict(self, data):
         X = self.convert_data(data)
         return self.clf.predict(X)
 
-    def plot_model(self, data, coefs_matrix):
-        from matplotlib import pyplot as plt
 
+    def plot_model(self, data):
+        from matplotlib import pyplot as plt
+        coefs_matrix = self.optimal_model.coef_.reshape(3, self.optimal_model.coef_.shape[1] / len(classifier.channel_idxs),  len(classifier.channel_idxs))
         for i in range(3):
-            ax = plt.subplot(1, 3, i+1)
+            ax = plt.subplot(3, 1, i+1)
             plt.gray()
             plt.tight_layout(pad=0.01, w_pad=0.01, h_pad=0.01)
             plt.imshow(coefs_matrix[i].T, interpolation='nearest')
             skip = 2
-            plt.xticks(range(self._freqs.size), self._freqs[::skip].astype(np.int32))
+            plt.xticks(range(self._freqs.size), self._freqs[::skip].astype(np.int32)-2)
             loc = ticker.MultipleLocator(base=skip) # this locator puts ticks at regular intervals
             ax.xaxis.set_major_locator(loc)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('channels')
-            plt.title('Class '+str(i))
+            if i ==0:
+                plt.title('Left LED (11hz)')
+            if i ==1:
+                plt.title('Forward LED (13hz)')
+            if i ==2:
+                plt.title('Right LED (9hz)')
+            plt.colorbar()
+            plt.tight_layout()
         plt.show()
 
     def plot_data(self, data, events):
         X = np.array(data, dtype=np.float32)
         X = np.ascontiguousarray(X[:, :, self.channel_idxs])
         y = self.convert_events(events)
-        freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend='linear',
+        freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='density', detrend='linear',
                                       window='hann', )
         freqs_idxs = np.logical_and(freqs >= 7, freqs <= 28)
         freqs = freqs[freqs_idxs]
@@ -102,7 +112,7 @@ class Classifier(object):
 
 
 class LRClassifier(Classifier):
-    def __init__(self, fsample=256.0, channel_idxs=np.arange(12, 17)):
+    def __init__(self, fsample=256.0, channel_idxs=np.arange(9, 22)):
         super(LRClassifier, self).__init__(fsample, channel_idxs)
         n_cv_folds = 3
         c_grid = [0.001, 0.01, 1, 10]
@@ -113,12 +123,12 @@ class LRClassifier(Classifier):
 
 
 class SVMClassifier(Classifier):
-    def __init__(self, fsample=256.0, channel_idxs=np.arange(12, 17)):
+    def __init__(self, fsample=256.0, channel_idxs=np.arange(9, 22)):
         super(SVMClassifier, self).__init__(fsample, channel_idxs)
         self.clf= GridSearchCV(sklearn.svm.LinearSVC(), param_grid={'C': [1, 10]}, scoring="accuracy")
 
 if __name__ == '__main__':
-    with open("subject_data_marcel2101_2", "rb") as f:
+    with open("subject_data_fran_2", "rb") as f:
         data_tuple = np.load(f)
         data = data_tuple['data']
         events = data_tuple['events']
@@ -129,11 +139,12 @@ if __name__ == '__main__':
 
     classifier.train(data[0:len(data) * 2/3], events[0:len(data) * 2/3])
     classifier.validate(data[len(data) * 2/3:len(data)],events[len(events)*2/3:len(events)])
+    classifier.plot_model(data)
     #Test the logistic regression classifier
     classifier = LRClassifier()
     classifier.train(data[0:len(data) * 2/3], events[0:len(data) * 2/3])
     classifier.validate(data[len(data) * 2/3:len(data)],events[len(events)*2/3:len(events)])
-
+    classifier.plot_model(data)
     data_array = np.array(data)
 
     with open("subject2_classifier", "wb") as f:
