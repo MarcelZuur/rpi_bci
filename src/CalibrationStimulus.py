@@ -2,11 +2,24 @@
 """Calibration stimulus script.
 
 This script displays the stimulus of the calibration phase, and sends messages to the buffer used by SigProc.py
-to label and gather data.
+to label and gather data. The leds flicker continuously and the target is indicated by turning the target led off
+for a specified time, after which the flicker resumes and an event with the target is send to the buffer.
 
 Attributes:
-  nSymbols (int): number of symbols/leds used in the stimulus presentation.
-
+  nSymbols(int): Number of symbols/leds used in the stimulus presentation.
+  nSequences(int): Number of sequences used in the stimulus presentation.
+  nEpochs(int): Number of epochs used in the stimulus presentation.
+  interEpochDelay(float): Delay between epochs.
+  stimulusDuration(float): Duration of the stimulus.
+  stimulusEventDelay(float): Delay before sending an event to the buffer indicating the stimulus is active.
+  stimulusFullDuration(float): Duration that the target led is off.
+  interSequenceDelay(float): Delay between sequences.
+  stimuli(int[][]): An array of symbols, indicating which symbol is active for each [sequence, epoch].
+  frequencies(int[]): An array of frequencies, where the frequency at index i is the frequency of symbol i.
+  frequency_full(int): Frequency of the target led when it's off.
+  leds(LEDPI): Object to interact with the leds.
+  t1(Thread): Thread that runs the leds.
+  frequencies_led(int[]): List of frequencies used as parameter for leds.
 """
 import json
 

@@ -1,4 +1,29 @@
 #!/usr/bin/python2.7
+"""Feedback stimulus script.
+
+This script displays the stimulus of the feedback phase, and sends messages to the buffer used by SigProc.py
+to gather data after which it waits for predictions. A prediction buffer is used to combine multiple predictions,
+the most frequent prediction in the buffer is taken, if these are all equal the most recent prediction is taken.
+After a final prediction is made the robot (see Robot) is moved according to the predicted value and the buffer
+is reset then new predictions are gathered again starting the same process over again.
+SigProc has to have trained a classifier before to be able to generate predictions, so CalibrationStimulus and
+TrainClassifier should have been run at least once before this.
+
+
+Attributes:
+  nSymbols(int): Number of symbols/leds used in the stimulus presentation.
+  buffer_size(int): Size of the buffer.
+  frequencies(int[]): An array of frequencies, where the frequency at index i is the frequency of symbol i.
+  frequency_full(int): Frequency of the target led when it's off.
+  leds(LEDPI): Object to interact with the leds.
+  t1(Thread): Thread that runs the leds.
+  frequencies_led(int[]): List of frequencies used as parameter for leds.
+  buffer(int[]): Buffer array containing the predictions, which resets after prediction_count>=buffer_size.
+  prediction(int): The predicted symbol.
+  prediction_count(int): Current number of predictions.
+"""
+
+
 import ConfigParser
 import json
 import threading
@@ -65,10 +90,10 @@ prediction = 3
 prediction_count = 0
 while True:
     bufhelp.sendevent("robot.start", 1)
-    t1 = time.time()
+    t2 = time.time()
     e = bufhelp.waitforevent("classifier.predictions", 3000, False)
     if e is not None:
-        print (time.time()-t1, e.value)
+        print (time.time()-t2, e.value)
         buffer = np.roll(buffer, 1)
         buffer[0] = e.value
         prediction_count+=1

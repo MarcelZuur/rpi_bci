@@ -1,4 +1,17 @@
 #!/usr/bin/python2.7
+"""Signal processing script.
+
+This script takes care of the signal processing for the calibration phase, classifier training phase
+and the feedback phase. It listens to the buffer for an event indicating which phase should be started.
+In the calibration phase it gathers and labels data. In the classifier training phase it trains the
+classifier. In the feedback phase it gathers data and generates predictions using the trained classifier,
+which then get send to the buffer.
+
+
+Attributes:
+  classifier(Classifier): The classifier that is trained and used for generating predictions.
+  trlen_ms(int): Duration for which data is gathered in ms.
+"""
 import sys
 
 from network import bufhelp

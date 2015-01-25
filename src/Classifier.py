@@ -15,13 +15,28 @@ from network import preproc
 
 
 class Classifier(object):
+    """Has functions for classifying EEG data. Functions take as input the data and events in the same format as gatherdata from
+    bufhelp returns.
+
+    Attributes:
+      clf: The classifier.
+      fsample(float): sample frequency of the eeg device used to record the data.
+      channel_idxs(int[]): Array of used channels.
+      optimal_model: The optimal model found through grid search.
+
+    """
     def __init__(self, fsample, channel_idxs):
+        """Constructs a classifier object which can be used to train and classify EEG data."""
         self.clf = None
         self.fsample = fsample
         self.channel_idxs = channel_idxs
 
     def convert_data(self, data):
+        """Converts the given data into a compatible format that can be used by the classifier and performs preprocessing.
+        For preprocessing the welch method is done with window size of 50% and an overlap of 50%, converting the time domain
+        to the frequency domain. Then frequencies and unused channels are filtered out.
 
+        """
         X = np.array(data, dtype=np.float32)
         freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend="linear",
                                       window='hann', )
@@ -35,23 +50,27 @@ class Classifier(object):
         return X
 
     def convert_events(self, events):
+        """Converts the given events into a compatible format that can be used by the classifier."""
         y = np.zeros(len(events), dtype=np.int32)
         for i in range(len(events)):
             y[i] = events[i].value
         return y
 
     def train(self, data, events):
+        """Trains the classifier on the given data and events."""
         X = self.convert_data(data)
         Y = self.convert_events(events)
         self.clf.fit(X, Y)
         self.optimal_model = self.clf.best_estimator_
 
     def predict(self, data):
+        """Returns a prediction from the given data."""
         X = self.convert_data(data)
         return self.clf.predict(X)
 
 
     def plot_model(self, data):
+        """Plots the model in frequency domain for each class with x-axis displaying frequency and y-axis the channels."""
         from matplotlib import pyplot as plt
         coefs_matrix = self.optimal_model.coef_.reshape(3, self.optimal_model.coef_.shape[1] / len(classifier.channel_idxs),  len(classifier.channel_idxs))
         for i in range(3):
@@ -76,6 +95,7 @@ class Classifier(object):
         plt.show()
 
     def plot_data(self, data, events):
+        """Plots the data in frequency domain for each class with x-axis displaying frequency and y-axis the power."""
         X = np.array(data, dtype=np.float32)
         if(self.channel_idxs is not None):
             X = np.ascontiguousarray(X[:, :, self.channel_idxs])
@@ -99,6 +119,7 @@ class Classifier(object):
         plt.show()
 
     def validate(self,data,events):
+        """Returns the accuracy of the classifier on the given data."""
         predictions = classifier.predict(data)
         print(predictions)
         y = classifier.convert_events(events)
@@ -108,6 +129,7 @@ class Classifier(object):
 
 
 class LRClassifier(Classifier):
+    """Extends Classifier, uses Logistic regression for classification."""
     def __init__(self, fsample=256.0, channel_idxs=np.arange(13, 17)):
         super(LRClassifier, self).__init__(fsample, channel_idxs)
         n_cv_folds = 3
@@ -119,6 +141,7 @@ class LRClassifier(Classifier):
 
 
 class SVMClassifier(Classifier):
+    """Extends Classifier, uses Support vector machine for classification."""
     def __init__(self, fsample=256.0, channel_idxs=np.arange(9, 22)):
         super(SVMClassifier, self).__init__(fsample, channel_idxs)
         c_grid = [0.001, 0.01, 1, 10]
