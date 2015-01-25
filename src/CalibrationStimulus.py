@@ -63,7 +63,7 @@ print("connected")
 #init stimuli
 nSymbols = 3
 nSequences = int(calibrationOptions["sequences"])
-nEpochs = nSymbols * 5
+nEpochs = int(calibrationOptions["epochs"])
 interEpochDelay = float(calibrationOptions["interepochdelay"])
 stimulusDuration = float(calibrationOptions["stimulusduration"])
 stimulusEventDelay = float(calibrationOptions["stimuluseventdelay"])
