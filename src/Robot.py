@@ -10,9 +10,9 @@ class Robot():
     """Has functions for controlling the nxt brick.
 
    Attributes:
-     brick: The connected nxt brick
-     sensors: List of used sensors
-     motors: List of used motors
+     brick: The connected nxt brick.
+     sensors: List of used sensors.
+     motors: List of used motors.
 
    """
 
@@ -49,6 +49,6 @@ class Robot():
     def show_message(self, message):
         self.brick.message_write(message)
 
-    def read_sensor(self, idx):
+    def read_sensor(self, idx=0):
         """Returns whether the touch sensor is pressed."""
         return self.sensors[idx].get_sample()
