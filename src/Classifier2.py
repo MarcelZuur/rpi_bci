@@ -29,7 +29,7 @@ class Classifier():
         X = np.ascontiguousarray(X[:, :, self.channel_idxs])
         freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend='linear',
                                       nperseg=X.shape[1]/2, window='hanning', )
-        freqs_idxs = np.logical_and(freqs >= 7, freqs <= 45)
+        freqs_idxs = np.logical_and(freqs >= 7, freqs <= 28)
         freqs = freqs[freqs_idxs]
         self._freqs = freqs
         X = np.ascontiguousarray(X[:, freqs_idxs, :])
@@ -54,21 +54,28 @@ class Classifier():
         X = self._convert_data(data)
         return self.optimal_model.predict(X)
 
-    def plot_model(self, data, coefs_matrix):
+    def plot_model(self, data):
         from matplotlib import pyplot as plt
-
+        coefs_matrix = self.optimal_model.coef_.reshape(3, model.coef_.shape[1] / len(classifier.channel_idxs),  len(classifier.channel_idxs))
         for i in range(3):
-            ax = plt.subplot(1, 3, i+1)
+            ax = plt.subplot(3, 1, i+1)
             plt.gray()
             plt.tight_layout(pad=0.01, w_pad=0.01, h_pad=0.01)
             plt.imshow(coefs_matrix[i].T, interpolation='nearest')
             skip = 2
-            plt.xticks(range(self._freqs.size), self._freqs[::skip].astype(np.int32))
+            plt.xticks(range(self._freqs.size), self._freqs[::skip].astype(np.int32)-2)
             loc = ticker.MultipleLocator(base=skip) # this locator puts ticks at regular intervals
             ax.xaxis.set_major_locator(loc)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('channels')
-            plt.title('Class '+str(i))
+            if i ==0:
+                plt.title('Left LED (11hz)')
+            if i ==1:
+                plt.title('Forward LED (13hz)')
+            if i ==2:
+                plt.title('Right LED (9hz)')
+            plt.colorbar()
+            plt.tight_layout()
         plt.show()
 
     def plot_data(self, data, events):
@@ -85,11 +92,17 @@ class Classifier():
         for i in range(3):
             X_avg = np.mean(X[y == i], axis=2)
             X_avg = np.mean(X_avg, axis=0)
-            plt.subplot(1, 3, i+1)
-            plt.semilogy(freqs, X_avg)
+            ax = plt.subplot(1, 3, i+1)
+            plt.plot(freqs, X_avg)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('Linear spectrum [V]')
-            plt.title('Class '+str(i))
+            if i ==0:
+                plt.title('Left LED (11hz)')
+            if i ==1:
+                plt.title('Forward LED (13hz)')
+            if i ==2:
+                plt.title('Right LED (9hz)')
+            ax.set_ylim([0, 3])
         plt.show()
 
 
@@ -123,5 +136,4 @@ if __name__ == '__main__':
         model = np.load(f)['model']
 
     assert (model.coef_ == classifier.optimal_model.coef_).all()
-    coefs_matrix = model.coef_.reshape(3, model.coef_.shape[1] / len(classifier.channel_idxs),  len(classifier.channel_idxs))
-    classifier.plot_model(data, coefs_matrix)
+    classifier.plot_model(data)
