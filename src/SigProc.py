@@ -51,15 +51,14 @@ bufhelp.connect(adress=hostname, port=port)
 
 #model init
 sigProcOption = ConfigSectionMap("SignalProcessing")
-fsample = float(sigProcOption["fsample"])
 channels = freqs = json.loads(sigProcOption["channels"])
 if (sigProcOption["classifier"].lower() == "lr"):
-    classifier = LRClassifier(fsample, channels)
+    classifier = LRClassifier(bufhelp.fSample, channels)
 else:
-    classifier = SVMClassifier(fsample, channels)
+    classifier = SVMClassifier(bufhelp.fSample, channels)
 
 #param
-trlen_ms = 2000
+trlen_ms = int(sigProcOption["trlen_ms"])
 
 run = True
 while run:
