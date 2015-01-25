@@ -68,11 +68,11 @@ class Classifier():
             ax.xaxis.set_major_locator(loc)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('channels')
-            if i ==0:
+            if i == 0:
                 plt.title('Left LED (11hz)')
-            if i ==1:
+            if i == 1:
                 plt.title('Forward LED (13hz)')
-            if i ==2:
+            if i == 2:
                 plt.title('Right LED (9hz)')
             plt.colorbar()
             plt.tight_layout()
@@ -96,15 +96,52 @@ class Classifier():
             plt.plot(freqs, X_avg)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('Linear spectrum [V]')
-            if i ==0:
+            if i == 0:
                 plt.title('Left LED (11hz)')
-            if i ==1:
+            if i == 1:
                 plt.title('Forward LED (13hz)')
-            if i ==2:
+            if i == 2:
                 plt.title('Right LED (9hz)')
             ax.set_ylim([0, 3])
         plt.show()
 
+
+    def plot_data2(self, data, data2, events, events2):
+        X = np.array(data, dtype=np.float32)
+        X = np.ascontiguousarray(X[:, :, self.channel_idxs])
+        y = self._convert_events(events)
+        freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend='linear',
+                                      window='hanning', )
+        freqs_idxs = np.logical_and(freqs >= 7, freqs <= 45)
+        freqs = freqs[freqs_idxs]
+        X = np.ascontiguousarray(X[:, freqs_idxs, :])
+
+        X2 = np.array(data2, dtype=np.float32)
+        X2 = np.ascontiguousarray(X2[:, :, self.channel_idxs])
+        y2 = self._convert_events(events2)
+        freqs2, X2 = scipy.signal.welch(X2, fs=self.fsample, axis=1, scaling='spectrum', detrend='linear',
+                                      window='hanning', )
+        X2 = np.ascontiguousarray(X2[:, freqs_idxs, :])
+        from matplotlib import pyplot as plt
+
+        for i in range(3):
+            X_avg = np.mean(X[y == i], axis=2)
+            X_avg = np.mean(X_avg, axis=0)
+            X2_avg = np.mean(X2[y2 == i], axis=2)
+            X2_avg = np.mean(X2_avg, axis=0)
+            ax = plt.subplot(1, 3, i+1)
+            plt.plot(freqs, X_avg,'b', freqs, X2_avg, 'g',linewidth=1.5)
+            plt.xlabel('frequency [Hz]')
+            plt.ylabel('Linear spectrum [V]')
+            if i == 0:
+                plt.title('Left LED (11hz)')
+            if i == 1:
+                plt.title('Forward LED (13hz)')
+            if i == 2:
+                plt.title('Right LED (9hz)')
+            ax.set_ylim([0, 3.0])
+            ax.legend(['close', 'far'])
+        plt.show()
 
 if __name__ == '__main__':
     with open("data2\\subject_data_marcel_table", "rb") as f:
@@ -112,10 +149,15 @@ if __name__ == '__main__':
         data = data_tuple['data']
         events = data_tuple['events']
 
+    with open("data2\\subject_data_marcel_floor", "rb") as f:
+        data_tuple = np.load(f)
+        data2 = data_tuple['data']
+        events2 = data_tuple['events']
+
     for i in range(1):
         print(i)
         classifier = Classifier()
-        classifier.plot_data(data, events)
+        classifier.plot_data2(data, data2, events, events2)
         classifier.train(data[0:len(data) / 2], events[0:len(data) / 2])
 
     predictions = classifier.predict(data[len(data) / 2:len(data)])

@@ -9,12 +9,12 @@ import time
 class Robot():
     """Has functions for controlling the nxt brick.
 
-   Attributes:
-     brick: The connected nxt brick.
-     sensors: List of used sensors.
-     motors: List of used motors.
+    Attributes:
+      brick: The connected nxt brick.
+      sensors: List of used sensors.
+      motors: List of used motors.
 
-   """
+    """
 
     def __init__(self):
         """Constructs a robot object which can be used to control the nxt brick."""

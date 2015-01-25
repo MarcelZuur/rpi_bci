@@ -264,6 +264,8 @@ def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose=True, tim
     time argument express the number of samples that need to be gathered in
     milliseconds rather than samples.
 
+    if the argument time_trigger is true, it exits after a single observation.*
+
     Note that this function assumes that at least half a second of data is
     being stored in the buffer."""
 
