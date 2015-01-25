@@ -23,19 +23,22 @@ Attributes:
   prediction_count(int): Current number of predictions.
 """
 
-
 import ConfigParser
 import json
 import threading
-import numpy as np
 import time
+
+import numpy as np
+from scipy.stats import mode
+
 from LEDPI import LEDPI
 from Robot import Robot
-from scipy.stats import mode
 from network import bufhelp
+
 
 Config = ConfigParser.ConfigParser()
 Config.read("settings.ini")
+
 
 def ConfigSectionMap(section):
     dict1 = {}
@@ -50,12 +53,13 @@ def ConfigSectionMap(section):
             dict1[option] = None
     return dict1
 
+
 connectionOptions = ConfigSectionMap("Connection")
 
 hostname = connectionOptions["hostname"]
 port = int(connectionOptions["port"])
-#connect to buffer
-bufhelp.connect(adress=hostname,port=port)
+# connect to buffer
+bufhelp.connect(adress=hostname, port=port)
 print("connected")
 
 ledOptions = ConfigSectionMap("LED")
@@ -72,10 +76,10 @@ frequencies = np.zeros(nSymbols)
 frequencies[0] = int(freqs[0])
 frequencies[1] = int(freqs[1])
 frequencies[2] = int(freqs[2])
-frequencies[3] = 25 #STOP
+frequencies[3] = 25  #STOP
 
 gpio = json.loads(ledOptions["gpio"])
-leds=LEDPI(gpio)
+leds = LEDPI(gpio)
 t1 = threading.Thread(target=leds.blinkLED)
 t1.start()
 leds.changeLED(frequencies[0:3].tolist())
@@ -93,10 +97,10 @@ while True:
     t2 = time.time()
     e = bufhelp.waitforevent("classifier.predictions", 3000, False)
     if e is not None:
-        print (time.time()-t2, e.value)
+        print (time.time() - t2, e.value)
         buffer = np.roll(buffer, 1)
         buffer[0] = e.value
-        prediction_count+=1
+        prediction_count += 1
         if prediction_count >= buffer_size:
             prediction = mode(buffer)[0]
             prediction_count = 0

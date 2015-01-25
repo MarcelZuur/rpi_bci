@@ -1,5 +1,6 @@
 # Use the pi for leds.
 import time
+
 import RPi.GPIO as GPIO
 
 
@@ -13,6 +14,7 @@ class LEDPI():
                      and off for millis[i].
 
     """
+
     def blinkLED(self):
         """Starts blinking the LEDs."""
         newTime = [0] * len(self.millis)
@@ -57,10 +59,11 @@ class LEDPI():
         """
         self.flipLED = [False] * len(frequencies)
         for idx, freq in enumerate(frequencies):
-            self.millis[idx]=(500 / freq if freq >0 else 0)
+            self.millis[idx] = (500 / freq if freq > 0 else 0)
 
     def update(self, model):
         pass
+
 
 if __name__ == '__main__':
     program = LEDPI([11, 13, 15])

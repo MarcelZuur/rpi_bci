@@ -1,8 +1,11 @@
-import RPi.GPIO as GPIO
 import time
+
 import numpy as np
 
-#init GPIO
+import RPi.GPIO as GPIO
+
+
+# init GPIO
 GPIO.setmode(GPIO.BOARD)
 nSymbols = 4
 pins = np.zeros(nSymbols)
@@ -17,18 +20,18 @@ GPIO.setup(pins[3], GPIO.OUT)
 
 #TODO: convert to frequency and duration
 def blink(symbol, nTimes, delay):
-        for i in range(0, nTimes):
-                print "led ON"
-                GPIO.output(pins[symbol], True)
-                time.sleep(delay)
-                GPIO.output(pins[symbol], False)
-                print "led OFF"
-                time.sleep(delay)
-        GPIO.cleanup()
+    for i in range(0, nTimes):
+        print "led ON"
+        GPIO.output(pins[symbol], True)
+        time.sleep(delay)
+        GPIO.output(pins[symbol], False)
+        print "led OFF"
+        time.sleep(delay)
+    GPIO.cleanup()
 
 
 def test():
-        nTimes = 5
-        frequency = 10
-        symbol = 0
-        blink(symbol, nTimes, 1/frequency)
+    nTimes = 5
+    frequency = 10
+    symbol = 0
+    blink(symbol, nTimes, 1 / frequency)

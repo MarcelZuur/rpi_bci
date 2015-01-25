@@ -22,16 +22,18 @@ Attributes:
   frequencies_led(int[]): List of frequencies used as parameter for leds.
 """
 import json
-
 import threading
-import numpy as np
 import time
+import ConfigParser
+
+import numpy as np
+
 from LEDPI import LEDPI
 from network import bufhelp
-import ConfigParser
 
 Config = ConfigParser.ConfigParser()
 Config.read("settings.ini")
+
 
 def ConfigSectionMap(section):
     dict1 = {}
@@ -46,28 +48,29 @@ def ConfigSectionMap(section):
             dict1[option] = None
     return dict1
 
+
 connectionOptions = ConfigSectionMap("Connection")
 calibrationOptions = ConfigSectionMap("Calibration")
 ledOptions = ConfigSectionMap("LED")
 
 hostname = connectionOptions["hostname"]
 port = int(connectionOptions["port"])
-#connect to buffer
-bufhelp.connect(adress=hostname,port=port)
+# connect to buffer
+bufhelp.connect(adress=hostname, port=port)
 print(bufhelp.fSample)
 print("connected")
 
 #init stimuli
 nSymbols = 3
 nSequences = int(calibrationOptions["sequences"])
-nEpochs = nSymbols*5
+nEpochs = nSymbols * 5
 interEpochDelay = float(calibrationOptions["interepochdelay"])
 stimulusDuration = float(calibrationOptions["stimulusduration"])
 stimulusEventDelay = float(calibrationOptions["stimuluseventdelay"])
 stimulusFullDuration = float(calibrationOptions["stimulusfullduration"])
 interSequenceDelay = float(calibrationOptions["intersequencedelay"])
 np.random.seed(0)
-stimuli = np.random.randint(nSymbols, size=(nSequences, nEpochs)) #TODO: less random
+stimuli = np.random.randint(nSymbols, size=(nSequences, nEpochs))  #TODO: less random
 
 #init frequencies
 freqs = json.loads(ledOptions["frequencies"])
@@ -79,10 +82,10 @@ frequencies[2] = int(freqs[2])
 frequency_full = 0
 
 gpio = json.loads(ledOptions["gpio"])
-leds=LEDPI(gpio)
+leds = LEDPI(gpio)
 t1 = threading.Thread(target=leds.blinkLED)
 t1.start()
-frequencies_led=frequencies[0:3].tolist()
+frequencies_led = frequencies[0:3].tolist()
 leds.changeLED(frequencies_led)
 
 #start stimuli
@@ -104,7 +107,7 @@ for i in xrange(nSequences):
 
         time.sleep(stimulusFullDuration)
 
-        frequencies_led=frequencies[0:3].tolist()
+        frequencies_led = frequencies[0:3].tolist()
         leds.changeLED(frequencies_led)
         time.sleep(stimulusEventDelay)
         bufhelp.sendevent('stimulus.visible', symbol)
@@ -114,7 +117,7 @@ for i in xrange(nSequences):
         time.sleep(interEpochDelay)
 
     print('stimulus.sequence', 'end')
-    frequencies_led=[0,0,0]
+    frequencies_led = [0, 0, 0]
     leds.changeLED(frequencies_led)
     time.sleep(interSequenceDelay)
 

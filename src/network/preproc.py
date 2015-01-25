@@ -1,6 +1,8 @@
-import scipy.signal 
-import numpy
 from math import ceil
+
+import scipy.signal
+import numpy
+
 
 def detrend(data, dim=1, type="linear"):
     '''Removes trends from the data.
@@ -30,24 +32,24 @@ def detrend(data, dim=1, type="linear"):
     >>> data = bufhelp.gatherdata("start",10,"stop")
     >>> data = preproc.detrend(data)
     '''
-                
-    if not isinstance(type,str):
+
+    if not isinstance(type, str):
         raise Exception("type is not a string.")
-        
-    if type!="linear" and type!="constant":
+
+    if type != "linear" and type != "constant":
         raise Exception("type should either be linear or constant")
-            
-    if not isinstance(data,numpy.ndarray):
+
+    if not isinstance(data, numpy.ndarray):
         X = concatdata(data)
-    elif isinstance(data,numpy.ndarray):
+    elif isinstance(data, numpy.ndarray):
         X = data
     else:
         raise Exception("data should be a numpy array or list of numpy arrays.")
-    
+
     X = scipy.signal.detrend(X, axis=dim, type=type)
-    
-    if not isinstance(data,numpy.ndarray):
-        return rebuilddata(X,data)
+
+    if not isinstance(data, numpy.ndarray):
+        return rebuilddata(X, data)
     else:
         return X
 
@@ -74,20 +76,21 @@ def clonelist(original):
     >>> events = ftc.getEvents(0,100)
     >>> events_copy = clonelist(events)
     '''
-    
+
     clone = []
 
     for element in original:
-        if hasattr(element,"deepcopy"):
+        if hasattr(element, "deepcopy"):
             clone.append(element.deepcopy())
-        elif hasattr(element,"copy"):
+        elif hasattr(element, "copy"):
             clone.append(element.copy())
         else:
             clone.append(element)
-    
+
     return clone
 
-def spatialfilter(data, type="car",whitencutoff=1e-15):
+
+def spatialfilter(data, type="car", whitencutoff=1e-15):
     '''Spatial filter for a list of datapoints.
     
     Applies a spatial filter to the data offers two types:
@@ -120,35 +123,38 @@ def spatialfilter(data, type="car",whitencutoff=1e-15):
     >>> data = bufhelp.gatherdata("start",10,"stop")
     >>> data = preproc.spatialfilter(data) #apply
     '''
-        
-    if not isinstance(type,str):
+
+    if not isinstance(type, str):
         raise Exception("type is not a string.")
 
-    if not isinstance(data,numpy.ndarray):
+    if not isinstance(data, numpy.ndarray):
         X = concatdata(data)
-    elif isinstance(data,numpy.ndarray):
+    elif isinstance(data, numpy.ndarray):
         X = data
     else:
         raise Exception("data should be a numpy array or list of numpy arrays.")
-        
-    if type=="car":
-        eye=numpy.eye(X.shape[0])-(1.0/X.shape[0])
-        X = numpy.dot(eye,X)
-        
-    elif type=="whiten":
-        
-        if not isinstance(whitencutoff, (int,float,long)):
-            raise Exception("whitencutoff is not a number.") 
-            
+
+    if type == "car":
+        eye = numpy.eye(X.shape[0]) - (1.0 / X.shape[0])
+        X = numpy.dot(eye, X)
+
+    elif type == "whiten":
+
+        if not isinstance(whitencutoff, (int, float, long)):
+            raise Exception("whitencutoff is not a number.")
+
         C = numpy.cov(X)
         e, E = numpy.linalg.eigh(C)
-        X = numpy.dot(reduce(numpy.dot,[E, numpy.diag(numpy.where(e > numpy.max(e) * whitencutoff, e, numpy.inf)**-.5), E.T]),X)
-    
-    if not isinstance(data,numpy.ndarray):
-        return rebuilddata(X,data)
+        X = numpy.dot(
+            reduce(numpy.dot, [E, numpy.diag(numpy.where(e > numpy.max(e) * whitencutoff, e, numpy.inf) ** -.5), E.T]),
+            X)
+
+    if not isinstance(data, numpy.ndarray):
+        return rebuilddata(X, data)
     else:
         return X
-    
+
+
 def fouriertransform(data, fSample, dim=0):
     '''Fourier transform for a list of datapoints.
     
@@ -173,70 +179,69 @@ def fouriertransform(data, fSample, dim=0):
     >>> data = bufhelp.gatherdata("start",10,"stop")
     >>> data = preproc.fouriertransform(data, bufhelp.fSample)
     '''
-        
+
     if not isinstance(dim, int):
-        raise Exception("dim is not a int.")   
-        
+        raise Exception("dim is not a int.")
+
     if not isinstance(fSample, float):
         raise Exception("fSample is not a float")
-    
-    if not isinstance(data,numpy.ndarray):
+
+    if not isinstance(data, numpy.ndarray):
         dataclone = clonelist(data)
-        
-        for k in range(0,len(data)):
+
+        for k in range(0, len(data)):
             data = dataclone[k]
-            #freqs2, ps2 = scipy.signal.welch(data, fs=fSample, axis=dim, scaling='spectrum') #FIXME: detrend false
-            ft = numpy.abs(numpy.fft.fft(data, axis=dim))**2
+            # freqs2, ps2 = scipy.signal.welch(data, fs=fSample, axis=dim, scaling='spectrum') #FIXME: detrend false
+            ft = numpy.abs(numpy.fft.fft(data, axis=dim)) ** 2
             #ft1 = numpy.abs(numpy.fft.fft(data[0:data.shape[0]/2], axis=dim))**2
             #ft2 = numpy.abs(numpy.fft.fft(data[data.shape[0]/2:data.shape[0]], axis=dim))**2
             #ft3 = numpy.abs(numpy.fft.fft(data[data.shape[0]/4:data.shape[0]/4+data.shape[0]/2], axis=dim))**2
             #ft=ft1+ft2+ft3
             #ft/=3
-            freqs = numpy.fft.fftfreq(data.shape[0], 1.0/fSample)
+            freqs = numpy.fft.fftfreq(data.shape[0], 1.0 / fSample)
             idx = [i for i in numpy.argsort(freqs) if freqs[i] >= 0]
-    
+
             index = list(data.shape)
             index[dim] = len(idx)
             ps = numpy.zeros(index)
-            
-            
+
             s = list(data.shape)
             del s[dim]
             s = s[0]
-            for i in range(0,s):
-                ind = [i,i]
-                ind[dim] = list(range(0,len(idx)))
-                sel = [i,i]
+            for i in range(0, s):
+                ind = [i, i]
+                ind[dim] = list(range(0, len(idx)))
+                sel = [i, i]
                 sel[dim] = idx
                 ps[ind] = ft[sel]
-                
+
             dataclone[k] = ps
-            
+
         return dataclone
-    elif isinstance(data,numpy.ndarray):
-        ft = numpy.abs(numpy.fft.fft(data, axis=dim))**2
-        freqs = numpy.fft.fftfreq(data.shape[0], 1.0/fSample)
+    elif isinstance(data, numpy.ndarray):
+        ft = numpy.abs(numpy.fft.fft(data, axis=dim)) ** 2
+        freqs = numpy.fft.fftfreq(data.shape[0], 1.0 / fSample)
         idx = [i for i in numpy.argsort(freqs) if freqs[i] >= 0]
 
         index = list(data.shape)
         index[dim] = len(idx)
         ps = numpy.zeros(index)
-        
-        
+
         s = list(data.shape)
         del s[dim]
         s = s[0]
-        for i in range(0,s):
-            ind = [i,i]
-            ind[dim] = list(range(0,len(idx)))
-            sel = [i,i]
+        for i in range(0, s):
+            ind = [i, i]
+            ind[dim] = list(range(0, len(idx)))
+            sel = [i, i]
             sel[dim] = idx
             ps[ind] = ft[sel]
     else:
         raise Exception("data should be a numpy array or list of numpy arrays.")
-        
-        return ps   
-        
+
+        return ps
+
+
 def spectrum(data, fSample, dim=0):
     '''Returns a list of frequenceis that form the spectrum of the data.
     
@@ -260,15 +265,16 @@ def spectrum(data, fSample, dim=0):
     >>> data = bufhelp.gatherdata("start",10,"stop")
     >>> data = preproc.spectrum(data, bufhelp.fSample)
     '''
-    
-    if not isinstance(data,numpy.ndarray):
-        freqs = numpy.fft.fftfreq(data[0].shape[dim]*2, 1.0/fSample)    
-    elif isinstance(data,numpy.ndarray):
-        freqs = numpy.fft.fftfreq(data.shape[dim], 1.0/fSample)    
+
+    if not isinstance(data, numpy.ndarray):
+        freqs = numpy.fft.fftfreq(data[0].shape[dim] * 2, 1.0 / fSample)
+    elif isinstance(data, numpy.ndarray):
+        freqs = numpy.fft.fftfreq(data.shape[dim], 1.0 / fSample)
     else:
-        raise Exception("data should be a numpy array or list of numpy arrays.")        
-        
+        raise Exception("data should be a numpy array or list of numpy arrays.")
+
     return [freqs[i] for i in numpy.argsort(freqs) if freqs[i] >= 0]
+
 
 def spectralfilter(data, band, fSample, dim=0):
     '''Applies a fourier transform and bandpass filter to the data.
@@ -313,10 +319,10 @@ def spectralfilter(data, band, fSample, dim=0):
     >>> data = preproc.spectralfilteronly(data, (8, 10, 12, 14), bufhelp.fSample)
     '''
     data = fouriertransform(data, fSample, dim)
-    
-    return spectralfilteronly(data,band,fSample,dim)
-    
-        
+
+    return spectralfilteronly(data, band, fSample, dim)
+
+
 def spectralfilteronly(data, band, fSample, dim=1):
     '''Applies a bandpass filter to the data.
     
@@ -360,49 +366,50 @@ def spectralfilteronly(data, band, fSample, dim=1):
     >>> data = preproc.fouriertransform(data)
     >>> data = preproc.spectralfilteronly(data, (8, 10, 12, 14), bufhelp.fSample)
     '''
-    
-    if isinstance(band, (tuple,list)):
-        if not (len(band)==2 or len(band)==4):
+
+    if isinstance(band, (tuple, list)):
+        if not (len(band) == 2 or len(band) == 4):
             raise Exception("band is wrong length tuple/list")
     elif callable(band):
         try:
-            if not isinstance(band(4.0), (int,float,long)):
+            if not isinstance(band(4.0), (int, float, long)):
                 raise Exception("band does not return a number")
         except:
             raise Exception("band does not have accept floats as an argument")
     else:
         raise Exception("band must either be a callable, a tuple or a list")
-        
-    if not isinstance(fSample,float):
+
+    if not isinstance(fSample, float):
         raise Exception("fSample is not a float.")
-        
-    if not isinstance(dim,int):
+
+    if not isinstance(dim, int):
         raise Exception("dim is not an int.")
-               
-    if not isinstance(data,numpy.ndarray):
+
+    if not isinstance(data, numpy.ndarray):
         for X in data:
-            freqs = spectrum(data,fSample)
+            freqs = spectrum(data, fSample)
             s = list(X.shape)
             del s[dim]
-            for j in range(0,s[0]):
-                index = [j,j]
-                for i in range(0,X.shape[dim]):
+            for j in range(0, s[0]):
+                index = [j, j]
+                for i in range(0, X.shape[dim]):
                     index[dim] = i
-                    X[index] = X[index] * _bandfunc(freqs[i], band)           
-    elif isinstance(data,numpy.ndarray):
-        freqs = spectrum(data,fSample, dim)
+                    X[index] = X[index] * _bandfunc(freqs[i], band)
+    elif isinstance(data, numpy.ndarray):
+        freqs = spectrum(data, fSample, dim)
         s = list(data.shape)
         del s[dim]
-        for j in range(0,s[0]):
-            index = [j,j]
-            for i in range(0,data.shape[dim]):
+        for j in range(0, s[0]):
+            index = [j, j]
+            for i in range(0, data.shape[dim]):
                 index[dim] = i
                 data[index] = data[index] * _bandfunc(freqs[i], band)
     else:
         raise Exception("data should be a numpy array or list of numpy arrays.")
-        
-    return data    
-        
+
+    return data
+
+
 def _bandfunc(x, band):
     if len(band) == 2:
         if x < band[0] or x > band[1]:
@@ -413,15 +420,15 @@ def _bandfunc(x, band):
         if x < band[0] or x > band[3]:
             return 0
         elif x < band[1]:
-            return (x - band[0])/(band[1]-band[0])
+            return (x - band[0]) / (band[1] - band[0])
         elif x > band[2]:
-            return (band[3] - x)/(band[3]-band[2])
+            return (band[3] - x) / (band[3] - band[2])
         else:
             return 1
     else:
         return band(x)
-        
-     
+
+
 def timebandfiler(data, timeband, milliseconds=False, fSample=None):
     '''Applies a timeband filter to the data.
     
@@ -450,48 +457,47 @@ def timebandfiler(data, timeband, milliseconds=False, fSample=None):
     >>> data = bufhelp.gatherdata("start",10,"stop")
     >>> data = preproc.spectrum(data, (25,35))
     '''
-    
-    if not isinstance(timeband, (list,tuple)):
+
+    if not isinstance(timeband, (list, tuple)):
         raise Exception("Timeband not a tuple or list.")
-    
+
     if len(timeband) != 2:
         raise Exception("Timeband is not size 2.")
-        
-    if not all(map(lambda x: isinstance(x,(int,long,float)), timeband)):
+
+    if not all(map(lambda x: isinstance(x, (int, long, float)), timeband)):
         raise Exception("timeband contains non-number elements.")
-        
+
     if timeband[0] > timeband[1]:
         raise Exception("Lower bound higher than upper bound.")
-        
+
     if not isinstance(data, list):
         raise Exception("Data is not a list.")
-        
-    if not all(map(lambda x: isinstance(x,numpy.ndarray), data)):
+
+    if not all(map(lambda x: isinstance(x, numpy.ndarray), data)):
         raise Exception("Data contains non numpy.array elements.")
 
-    if not isinstance(milliseconds,bool):
+    if not isinstance(milliseconds, bool):
         raise Exception("milliseconds is not a boolean")
-        
-    data = clonelist(data)        
-    
+
+    data = clonelist(data)
+
     if milliseconds:
         if not isinstance(fSample, float):
             raise Exception("fSample is not a float.")
-            
-        lower = (timeband[0]/1000.0)*float(fSample)
-        upper = (timeband[1]/1000.0)*float(fSample)
+
+        lower = (timeband[0] / 1000.0) * float(fSample)
+        upper = (timeband[1] / 1000.0) * float(fSample)
     else:
         lower = timeband[0]
         upper = timeband[1]
-    
+
     lower = int(lower)
-    upper = int(ceil(upper))    
-    
-    for i in range(0,len(data)):
-        data[0] = data[0][lower:upper,:]
-        
+    upper = int(ceil(upper))
+
+    for i in range(0, len(data)):
+        data[0] = data[0][lower:upper, :]
+
     return data
-     
 
 
 def concatdata(data):
@@ -514,19 +520,20 @@ def concatdata(data):
     --------
     rebuild
     '''
-    
+
     if not isinstance(data, list):
         raise Exception("Data is not a list.")
-        
-    if not all(map(lambda x: isinstance(x,numpy.ndarray), data)):
+
+    if not all(map(lambda x: isinstance(x, numpy.ndarray), data)):
         raise Exception("Data contains non numpy.array elements.")
-    
+
     if not all(map(lambda x: x.shape[1] == data[0].shape[1], data)):
         raise Exception("Inconsistent number of channels in data!")
-        
+
     return numpy.concatenate(data)
-    
-def badchannelremoval(data, badchannels = None, threshold = (-numpy.inf,3.1)):
+
+
+def badchannelremoval(data, badchannels=None, threshold=(-numpy.inf, 3.1)):
     '''Removes bad channels from the data.
     
     Removes bad channels from the data. Basically applies outlier detection
@@ -553,43 +560,44 @@ def badchannelremoval(data, badchannels = None, threshold = (-numpy.inf,3.1)):
     >>> data = bufhelp.gatherdata("start",10,"stop")
     >>> data, badch = preproc.badchannelremoval(data)
     '''
-    
+
     if not isinstance(data, list):
         raise Exception("Data is not a list.")
-        
-    if not all(map(lambda x: isinstance(x,numpy.ndarray), data)):
+
+    if not all(map(lambda x: isinstance(x, numpy.ndarray), data)):
         raise Exception("Data contains non numpy.array elements.")
-    
+
     if not all(map(lambda x: x.shape[1] == data[0].shape[1], data)):
         raise Exception("Inconsistent number of channels in data!")
-    
+
     if badchannels is not None:
-        goodchannels = [x for x in range(data[0].shape[1]) if x not in badchannels]        
-        
-        if not isinstance(data,numpy.ndarray):
+        goodchannels = [x for x in range(data[0].shape[1]) if x not in badchannels]
+
+        if not isinstance(data, numpy.ndarray):
             data = clonelist(data)
-            for i in range(0,len(data)):
-                data[i] = data[i][:,goodchannels]            
+            for i in range(0, len(data)):
+                data[i] = data[i][:, goodchannels]
         else:
-            return data[:,badchannels]
-    
-    if not isinstance(data,numpy.ndarray):
+            return data[:, badchannels]
+
+    if not isinstance(data, numpy.ndarray):
         X = concatdata(data)
-    elif isinstance(data,numpy.ndarray):
+    elif isinstance(data, numpy.ndarray):
         X = data
     else:
         raise Exception("data should be a list of numpy arrays or a numpy array")
-    
-    inliers, outliers = outlierdetection(X, 0, threshold)    
-        
-    if not isinstance(data,numpy.ndarray):
-        return (rebuilddata(X[:,inliers],data), outliers)
-    elif isinstance(data,numpy.ndarray):
-        return (X[:,inliers], outliers)
+
+    inliers, outliers = outlierdetection(X, 0, threshold)
+
+    if not isinstance(data, numpy.ndarray):
+        return (rebuilddata(X[:, inliers], data), outliers)
+    elif isinstance(data, numpy.ndarray):
+        return (X[:, inliers], outliers)
     else:
         raise Exception("data should be a numpy array or list of numpy arrays.")
 
-def badtrailremoval(data, events = None, threshold = (None,3.1)):
+
+def badtrailremoval(data, events=None, threshold=(None, 3.1)):
     '''Removes bad trails from the data.
     
     Removes bad trails from the data. Applies outlier detection on the rows
@@ -613,40 +621,41 @@ def badtrailremoval(data, events = None, threshold = (None,3.1)):
     >>> data = bufhelp.gatherdata("start",10,"stop")
     >>> data, badtrl = preproc.badchannelremoval(data)
     '''
-    
-    if not isinstance(data,numpy.ndarray):
+
+    if not isinstance(data, numpy.ndarray):
         X = numpy.array([d.flatten() for d in data])
     else:
         X = data
-        
-    inliers, outliers = outlierdetection(X, 1, threshold)    
-        
-    if not isinstance(data,numpy.ndarray):
+
+    inliers, outliers = outlierdetection(X, 1, threshold)
+
+    if not isinstance(data, numpy.ndarray):
         dataout = []
-        
+
         for i in inliers:
             dataout.append(data[i].copy())
-            
+
         if events is not None:
             eventsout = []
-            
+
             for i in inliers:
-                if hasattr(events[i],"deepcopy"):
+                if hasattr(events[i], "deepcopy"):
                     eventsout.append(events[i].deepcopy())
-                elif hasattr(events[i],"copy"):
+                elif hasattr(events[i], "copy"):
                     eventsout.append(events[i].copy())
                 else:
                     eventsout.append(events[i])
-        
-            return (dataout, eventsout, outliers)            
-            
+
+            return (dataout, eventsout, outliers)
+
         return (dataout, outliers)
-    elif isinstance(data,numpy.ndarray):
-        return (X[inliers,:], outliers)
+    elif isinstance(data, numpy.ndarray):
+        return (X[inliers, :], outliers)
     else:
         raise Exception("data should be a numpy array or list of numpy arrays.")
-    
-def outlierdetection(X, dim=0, threshold=(None,3), maxIter=1, feat="var"):
+
+
+def outlierdetection(X, dim=0, threshold=(None, 3), maxIter=1, feat="var"):
     '''Removes outliers from X. Based on idOutliers.m
     
     Removes outliers from X based on robust coviarance variance/mean 
@@ -670,49 +679,49 @@ def outlierdetection(X, dim=0, threshold=(None,3), maxIter=1, feat="var"):
     --------
     >>> data, events = ftc.getData(0,100)
     >>> inliers, outliers = preproc.outlierdetection(data)
-    '''   
-  
-    if feat=="var":
-        feat = numpy.sqrt(numpy.abs(numpy.var(X,dim)))
-    elif feat =="mu":
-        feat = numpy.mean(X,dim)
-    elif isinstance(feat,numpy.array):
-        if not (all(map(lambda x: isinstance(x,(int , long , float)), feat)) and feat.shape == X.shape):
+    '''
+
+    if feat == "var":
+        feat = numpy.sqrt(numpy.abs(numpy.var(X, dim)))
+    elif feat == "mu":
+        feat = numpy.mean(X, dim)
+    elif isinstance(feat, numpy.array):
+        if not (all(map(lambda x: isinstance(x, (int, long, float)), feat)) and feat.shape == X.shape):
             raise Exception("Unrecognised feature type.")
-    else:        
+    else:
         raise Exception("Unrecognised feature type.")
-    
+
     outliers = []
-    inliers = numpy.array(range(0,max(feat.shape)))    
+    inliers = numpy.array(range(0, max(feat.shape)))
 
     mufeat = numpy.zeros(maxIter)
     stdfeat = numpy.zeros(maxIter)
-    for i in range(0,maxIter):
+    for i in range(0, maxIter):
         mufeat = numpy.median(feat[inliers])
         stdfeat = numpy.std(feat[inliers])
 
         if threshold[0] is None:
-            high = mufeat+threshold[1]*stdfeat
+            high = mufeat + threshold[1] * stdfeat
             bad = (feat > high)
         elif threshold[1] is None:
-            low = mufeat+threshold[0]*stdfeat
+            low = mufeat + threshold[0] * stdfeat
             bad = (feat < low)
         else:
-            high = mufeat+threshold[1]*stdfeat
-            low = mufeat+threshold[0]*stdfeat
+            high = mufeat + threshold[1] * stdfeat
+            low = mufeat + threshold[0] * stdfeat
             bad = (feat > high) * (feat < low)
 
         if not any(bad):
             break
         else:
             outliers = outliers + list(inliers[bad])
-            #inliers = inliers[[ not x for x in bad]]
+            # inliers = inliers[[ not x for x in bad]]
             inliers = numpy.delete(inliers, inliers[bad])
-    
-    return (list(inliers), outliers)
-    
 
-def rebuilddata(X,data):
+    return (list(inliers), outliers)
+
+
+def rebuilddata(X, data):
     '''Rebuilds a list of datapoints based on a large numpy array.
     
     Basically reverses concatdata.
@@ -733,17 +742,17 @@ def rebuilddata(X,data):
     >>> X = preproc.concatdata(data)
     >>> X = X + 1
     >>> data = preproc.rebuilddata(X,data)
-    '''   
-    
+    '''
+
     if X.shape[0] != sum(map(lambda x: x.shape[0], data)):
         raise Exception("Different number of samples in X and data!")
-    
-    data = clonelist(data)    
-    
+
+    data = clonelist(data)
+
     start = 0;
-    for i in range(0,len(data)):
+    for i in range(0, len(data)):
         end = start + data[i].shape[0]
-        data[i] = X[start:end,:]
+        data[i] = X[start:end, :]
         start = start + data[i].shape[0]
-        
+
     return data

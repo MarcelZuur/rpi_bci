@@ -1,14 +1,14 @@
 __author__ = 'PAUL'
+
 import time
 
-import RPi.GPIO as GPIO
-import time
 import numpy as np
+
+import RPi.GPIO as GPIO
 
 
 class Blink():
-
-    #init GPIO
+    # init GPIO
     GPIO.setmode(GPIO.BOARD)
     nSymbols = 4
     pins = np.zeros(nSymbols)
@@ -29,15 +29,14 @@ class Blink():
 
 
 class Led():
-
     def __init__(self, frequency, pin):
         self._last_update = time.time()
-        self._delay = 1/frequency
+        self._delay = 1 / frequency
         self._pin = pin
         self._pin_ON = False
 
     def blinkCheck(self):
-        if time.time()>=self._last_update+self._delay:
+        if time.time() >= self._last_update + self._delay:
             if not self._pin_ON:
                 GPIO.output(self._pin, True)
                 self._pin_ON = True

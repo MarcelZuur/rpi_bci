@@ -7,7 +7,7 @@ from math import ceil
 import socket
 
 
-def connect(header=True,adress = "localhost",port=1972):
+def connect(header=True, adress="localhost", port=1972):
     """Connects to the buffer. And waits for a header (unless otherwise
     specified). The ftc variable contains the client connection."""
 

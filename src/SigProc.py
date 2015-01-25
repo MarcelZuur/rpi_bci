@@ -13,11 +13,13 @@ Attributes:
   trlen_ms(int): Duration for which data is gathered in ms.
 """
 import sys
-
-from network import bufhelp
-from Classifier import SVMClassifier,LRClassifier
 import ConfigParser
 import json
+
+from network import bufhelp
+from Classifier import SVMClassifier, LRClassifier
+
+
 sys.path.append("../../dataAcq/buffer/python")
 sys.path.append("../signalProc")
 import pickle
@@ -25,6 +27,7 @@ import numpy as np
 
 Config = ConfigParser.ConfigParser()
 Config.read("settings.ini")
+
 
 def ConfigSectionMap(section):
     dict1 = {}
@@ -39,20 +42,21 @@ def ConfigSectionMap(section):
             dict1[option] = None
     return dict1
 
+
 connectionOptions = ConfigSectionMap("Connection")
-#connect to buffer
+# connect to buffer
 hostname = connectionOptions["hostname"]
 port = int(connectionOptions["port"])
-bufhelp.connect(adress=hostname,port=port)
+bufhelp.connect(adress=hostname, port=port)
 
 #model init
 sigProcOption = ConfigSectionMap("SignalProcessing")
 fsample = float(sigProcOption["fsample"])
 channels = freqs = json.loads(sigProcOption["channels"])
-if(sigProcOption["classifier"].lower() == "lr"):
-    classifier = LRClassifier(fsample,channels)
+if (sigProcOption["classifier"].lower() == "lr"):
+    classifier = LRClassifier(fsample, channels)
 else:
-    classifier = SVMClassifier(fsample,channels)
+    classifier = SVMClassifier(fsample, channels)
 
 #param
 trlen_ms = 2000
@@ -65,10 +69,11 @@ while run:
     if e is not None:
         if e.value == "calibration":
             print "Calibration phase"
-            data, events, stopevents = bufhelp.gatherdata("stimulus.visible",trlen_ms,("stimulus.training","end"), milliseconds=True)
+            data, events, stopevents = bufhelp.gatherdata("stimulus.visible", trlen_ms, ("stimulus.training", "end"),
+                                                          milliseconds=True)
             print "end"
             with open("subject_data", "wb") as f:
-                pickle.dump({"events":events,"data":data}, f)
+                pickle.dump({"events": events, "data": data}, f)
 
         elif e.value == "train":
             print "Training classifier"
@@ -77,26 +82,28 @@ while run:
                 data = data_tuple['data']
                 events = data_tuple['events']
 
-            classifier.train(data,events)
+            classifier.train(data, events)
 
             with open("subject_classifier", "wb") as f:
-                pickle.dump({"model":classifier.optimal_model}, f)
+                pickle.dump({"model": classifier.optimal_model}, f)
 
             bufhelp.update()
-            bufhelp.sendevent("sigproc.training","end")
+            bufhelp.sendevent("sigproc.training", "end")
 
-        elif e.value =="feedback":
+        elif e.value == "feedback":
             print "Feedback phase"
             while True:
-                data, events, stopevents = bufhelp.gatherdata("robot.start", trlen_ms,[("robot.stop",1), ("stimulus.feedback","end")], milliseconds=True, time_trigger=True)
+                data, events, stopevents = bufhelp.gatherdata("robot.start", trlen_ms,
+                                                              [("robot.stop", 1), ("stimulus.feedback", "end")],
+                                                              milliseconds=True, time_trigger=True)
 
                 if isinstance(stopevents, list):
                     if any(map(lambda x: "stimulus.feedback" in x.type, stopevents)):
-                        bufhelp.sendevent("sigproc.feedback","end")
+                        bufhelp.sendevent("sigproc.feedback", "end")
                         break
                 else:
                     if "stimulus.feedback" in stopevents.type:
-                        bufhelp.sendevent("sigproc.feedback","end")
+                        bufhelp.sendevent("sigproc.feedback", "end")
                         break
 
                 print "get prediction"
@@ -111,6 +118,6 @@ while run:
                 else:
                     print("ERROR: NO DATA")
 
-        elif e.value =="exit":
-            bufhelp.sendevent("sigproc","exit")
+        elif e.value == "exit":
+            bufhelp.sendevent("sigproc", "exit")
             run = False

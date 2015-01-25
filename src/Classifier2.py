@@ -1,13 +1,10 @@
 import pickle
-from matplotlib import ticker
-from sklearn import svm
 
+from matplotlib import ticker
 import numpy as np
 import scipy
 from sklearn.grid_search import GridSearchCV
 from sklearn.linear_model import LogisticRegression
-
-from network import preproc
 
 
 class Classifier():
@@ -15,7 +12,7 @@ class Classifier():
         n_cv_folds = 3
         c_grid = [0.001, 0.01, 1, 100]
         model = LogisticRegression(C=1.0, penalty='l1', random_state=0)
-        #model = svm.SVC(kernel='linear', verbose=False, max_iter=10000000)
+        # model = svm.SVC(kernel='linear', verbose=False, max_iter=10000000)
         self.clf = GridSearchCV(model, param_grid={'C': c_grid}, cv=n_cv_folds,
                                 scoring='accuracy')
         self.events = None
@@ -28,7 +25,7 @@ class Classifier():
         X = np.array(data, dtype=np.float32)
         X = np.ascontiguousarray(X[:, :, self.channel_idxs])
         freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend='linear',
-                                      nperseg=X.shape[1]/2, window='hanning', )
+                                      nperseg=X.shape[1] / 2, window='hanning', )
         freqs_idxs = np.logical_and(freqs >= 7, freqs <= 28)
         freqs = freqs[freqs_idxs]
         self._freqs = freqs
@@ -56,15 +53,17 @@ class Classifier():
 
     def plot_model(self, data):
         from matplotlib import pyplot as plt
-        coefs_matrix = self.optimal_model.coef_.reshape(3, model.coef_.shape[1] / len(classifier.channel_idxs),  len(classifier.channel_idxs))
+
+        coefs_matrix = self.optimal_model.coef_.reshape(3, model.coef_.shape[1] / len(classifier.channel_idxs),
+                                                        len(classifier.channel_idxs))
         for i in range(3):
-            ax = plt.subplot(3, 1, i+1)
+            ax = plt.subplot(3, 1, i + 1)
             plt.gray()
             plt.tight_layout(pad=0.01, w_pad=0.01, h_pad=0.01)
             plt.imshow(coefs_matrix[i].T, interpolation='nearest')
             skip = 2
-            plt.xticks(range(self._freqs.size), self._freqs[::skip].astype(np.int32)-2)
-            loc = ticker.MultipleLocator(base=skip) # this locator puts ticks at regular intervals
+            plt.xticks(range(self._freqs.size), self._freqs[::skip].astype(np.int32) - 2)
+            loc = ticker.MultipleLocator(base=skip)  # this locator puts ticks at regular intervals
             ax.xaxis.set_major_locator(loc)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('channels')
@@ -92,7 +91,7 @@ class Classifier():
         for i in range(3):
             X_avg = np.mean(X[y == i], axis=2)
             X_avg = np.mean(X_avg, axis=0)
-            ax = plt.subplot(1, 3, i+1)
+            ax = plt.subplot(1, 3, i + 1)
             plt.plot(freqs, X_avg)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('Linear spectrum [V]')
@@ -120,7 +119,7 @@ class Classifier():
         X2 = np.ascontiguousarray(X2[:, :, self.channel_idxs])
         y2 = self._convert_events(events2)
         freqs2, X2 = scipy.signal.welch(X2, fs=self.fsample, axis=1, scaling='spectrum', detrend='linear',
-                                      window='hanning', )
+                                        window='hanning', )
         X2 = np.ascontiguousarray(X2[:, freqs_idxs, :])
         from matplotlib import pyplot as plt
 
@@ -129,8 +128,8 @@ class Classifier():
             X_avg = np.mean(X_avg, axis=0)
             X2_avg = np.mean(X2[y2 == i], axis=2)
             X2_avg = np.mean(X2_avg, axis=0)
-            ax = plt.subplot(1, 3, i+1)
-            plt.plot(freqs, X_avg,'b', freqs, X2_avg, 'g',linewidth=1.5)
+            ax = plt.subplot(1, 3, i + 1)
+            plt.plot(freqs, X_avg, 'b', freqs, X2_avg, 'g', linewidth=1.5)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('Linear spectrum [V]')
             if i == 0:
@@ -142,6 +141,7 @@ class Classifier():
             ax.set_ylim([0, 3.0])
             ax.legend(['close', 'far'])
         plt.show()
+
 
 if __name__ == '__main__':
     with open("data2\\subject_data_marcel_table", "rb") as f:
