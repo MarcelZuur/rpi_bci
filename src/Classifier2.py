@@ -54,11 +54,11 @@ class Classifier():
         X = self._convert_data(data)
         return self.optimal_model.predict(X)
 
-    def plot_model(self, data, coefs_matrix):
+    def plot_model(self, data):
         from matplotlib import pyplot as plt
-
+        coefs_matrix = self.optimal_model.coef_.reshape(3, model.coef_.shape[1] / len(classifier.channel_idxs),  len(classifier.channel_idxs))
         for i in range(3):
-            ax = plt.subplot(1, 3, i+1)
+            ax = plt.subplot(3, 1, i+1)
             plt.gray()
             plt.tight_layout(pad=0.01, w_pad=0.01, h_pad=0.01)
             plt.imshow(coefs_matrix[i].T, interpolation='nearest')
@@ -68,7 +68,13 @@ class Classifier():
             ax.xaxis.set_major_locator(loc)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('channels')
-            plt.title('Class '+str(i))
+            if i ==0:
+                plt.title('Left LED (11hz)')
+            if i ==1:
+                plt.title('Forward LED (13hz)')
+            if i ==2:
+                plt.title('Right LED (9hz)')
+            plt.colorbar()
         plt.show()
 
     def plot_data(self, data, events):
@@ -89,7 +95,12 @@ class Classifier():
             plt.semilogy(freqs, X_avg)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('Linear spectrum [V]')
-            plt.title('Class '+str(i))
+            if i ==0:
+                plt.title('Left LED (11hz)')
+            if i ==1:
+                plt.title('Forward LED (13hz)')
+            if i ==2:
+                plt.title('Right LED (9hz)')
         plt.show()
 
 
@@ -123,5 +134,4 @@ if __name__ == '__main__':
         model = np.load(f)['model']
 
     assert (model.coef_ == classifier.optimal_model.coef_).all()
-    coefs_matrix = model.coef_.reshape(3, model.coef_.shape[1] / len(classifier.channel_idxs),  len(classifier.channel_idxs))
-    classifier.plot_model(data, coefs_matrix)
+    classifier.plot_model(data)
