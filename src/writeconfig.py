@@ -7,6 +7,7 @@ cfgfile = open("settings.ini", 'w')
 
 # add the settings to the structure of the file, and lets write it out...
 Config.add_section('Connection')
+Config.set("Connection", "; Use your hostname or IP adress")
 Config.set('Connection', 'hostname', "127.0.0.1")
 Config.set('Connection', 'port', 1972)
 Config.add_section('LED')
