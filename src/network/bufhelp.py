@@ -1,34 +1,19 @@
 import sys
+
 sys.path.append("../../dataAcq/buffer/python")
 from FieldTrip import Client, Event
 from time import time, sleep
 from math import ceil
 import socket
 
-def connect(header=True, verbose = True):
+
+def connect(header=True,adress = "localhost",port=1972):
     """Connects to the buffer. And waits for a header (unless otherwise
     specified). The ftc variable contains the client connection."""
 
     global ftc, event
     ftc = Client()
     event = Event()
-
-    adress = "localhost"
-    port = 1972
-
-    if verbose:
-        adress = raw_input("Buffer adress (default is \"localhost:1972\"):")
-        if adress == "":
-            adress = "localhost"
-        else:
-            try:
-                split = adress.split(":")
-                adress = split[0]
-                port = int(split[1])
-            except ValueError:
-                print "Invalid port formatting " + split[1]
-            except IndexError:
-                print "Invalid adress formatting " + adress
 
     while not ftc.isConnected:
         try:
@@ -38,12 +23,13 @@ def connect(header=True, verbose = True):
             sleep(1)
 
     if header:
-        hdr = waitforheader(verbose)
-        return ftc,hdr
+        hdr = waitforheader()
+        return ftc, hdr
 
     return ftc
 
-def waitforheader(verbose = True):
+
+def waitforheader(verbose=True):
     """Waits for a header to be added to the buffer."""
     global fSample, nSamples, lastupdate
 
@@ -60,7 +46,8 @@ def waitforheader(verbose = True):
 
     return hdr
 
-def sendevent(type, value, duration = 0, sample=-1, offset=-1, verbose = True):
+
+def sendevent(type, value, duration=0, sample=-1, offset=-1, verbose=True):
     """Sends an event to the buffer with type type and value value. Unless
     otherwise specified duration will be 0. Sample and offset will be estimated
     based on the global variables (unless specified)."""
@@ -82,20 +69,24 @@ def sendevent(type, value, duration = 0, sample=-1, offset=-1, verbose = True):
 
     ftc.putEvents(event)
 
-def update(verbose = True):
+
+def update(verbose=True):
     """Requests a poll of the buffer and updates the global variables used by
     sendevent to estimate the current nSamples."""
 
-    (nsamp,nevent) = ftc.poll()
+    (nsamp, nevent) = ftc.poll()
     global nSamples, lastupdate, nEvents
     nSamples = nsamp
-    nEvents  = nevent
+    nEvents = nevent
     lastupdate = time()
     if verbose:
         print "Updated. nSamples = " + str(nSamples) + " at lastupdate " + str(lastupdate)
 
-procnEvents=0
-def waitnewevents(evtypes, timeout_ms=1000,verbose = True):
+
+procnEvents = 0
+
+
+def waitnewevents(evtypes, timeout_ms=1000, verbose=True):
     """Function that blocks until a certain type of event is recieved.
     evttypes is a list of event type strings, recieving any of these event types termintes the block.
     All such matching events are returned
@@ -108,50 +99,53 @@ def waitnewevents(evtypes, timeout_ms=1000,verbose = True):
     if verbose:
         print "Waiting for event(s) " + str(evtypes) + " with timeout_ms " + str(timeout_ms)
 
-    evt=None
+    evt = None
     while elapsed_ms < timeout_ms and evt is None:
-        nSamples, nEvents2 = ftc.wait(-1,procnEvents, timeout_ms - elapsed_ms)
+        nSamples, nEvents2 = ftc.wait(-1, procnEvents, timeout_ms - elapsed_ms)
 
-        if nEvents2 > nEvents : # new events to process
+        if nEvents2 > nEvents:  # new events to process
             procnEvents = nEvents2
-            evts = ftc.getEvents((nEvents, nEvents2 -1))
+            evts = ftc.getEvents((nEvents, nEvents2 - 1))
             evts = filter(lambda x: x.type in evtypes, evts)
-            if len(evts) > 0 :
-                evt=evts
+            if len(evts) > 0:
+                evt = evts
 
-        elapsed_ms = (time() - start)*1000
+        elapsed_ms = (time() - start) * 1000
         nEvents = nEvents2
     return evt
 
 # Function that blocks until a certain type of event is recieved. evttype defines what
 # event termintes the block.  Only the first such matching event is returned.
-procnEvents=0
-def waitnewevents2(evtype, timeout_ms=1000,verbose = True):
+procnEvents = 0
+
+
+def waitnewevents2(evtype, timeout_ms=1000, verbose=True):
     global ftc, nEvents, nSamples
     global procnEvents
     start = time()
-    nEvents,nSamples=ftc.poll()
+    nEvents, nSamples = ftc.poll()
     elapsed_ms = 0
 
     if verbose:
         print "Waiting for event " + str(evtype) + " with timeout_ms " + str(timeout_ms)
 
-    evt=None
+    evt = None
     while elapsed_ms < timeout_ms and evt is None:
-        nSamples, nEvents2 = ftc.wait(-1,procnEvents, timeout_ms - elapsed_ms)
+        nSamples, nEvents2 = ftc.wait(-1, procnEvents, timeout_ms - elapsed_ms)
 
-        if nEvents != nEvents2: # new events to process
+        if nEvents != nEvents2:  # new events to process
             procnEvents = nEvents2
-            evts = ftc.getEvents((nEvents, nEvents2 -1))
-            evts = filter(lambda x: x.type in evtype,evts)
+            evts = ftc.getEvents((nEvents, nEvents2 - 1))
+            evts = filter(lambda x: x.type in evtype, evts)
             if len(evts) > 0:
-                evt=evts
+                evt = evts
 
-        elapsed_ms = (time() - start)*1000
+        elapsed_ms = (time() - start) * 1000
         nEvents = nEvents2
     return evt
 
-def waitforevent(trigger, timeout=1000,verbose = True):
+
+def waitforevent(trigger, timeout=1000, verbose=True):
     """Function that blocks until a certain event is sent. Trigger defines what
     event the function is waiting for based on createeventfilter
 
@@ -164,26 +158,27 @@ def waitforevent(trigger, timeout=1000,verbose = True):
     global ftc
     start = time()
     nSamples, nEvents = ftc.poll()
-    elapsed = time()*1000 - start*1000
+    elapsed = time() * 1000 - start * 1000
 
     if verbose:
         print "Waiting for event " + str(trigger) + " with timeout " + str(timeout)
 
     while elapsed < timeout:
-        nSamples, nEvents2 = ftc.wait(-1,nEvents, timeout - elapsed)
+        nSamples, nEvents2 = ftc.wait(-1, nEvents, timeout - elapsed)
 
         if nEvents != nEvents2:
-            e = func(ftc.getEvents((nEvents, nEvents2 -1)))
+            e = func(ftc.getEvents((nEvents, nEvents2 - 1)))
 
             if len(e) == 1:
                 return e[0]
             elif len(e) > 1:
                 return e
 
-        elapsed = time()*1000 - start*1000
+        elapsed = time() * 1000 - start * 1000
         nEvents = nEvents2
 
     return None
+
 
 def createeventfilter(trigger):
     """Creates a filter that filters out events that do not satisfies
@@ -202,16 +197,16 @@ def createeventfilter(trigger):
     Returns a function."""
 
     if callable(trigger):
-        if isinstance(trigger(e[0]),bool):
-            func = lambda events: filter(trigger,events)
+        if isinstance(trigger(e[0]), bool):
+            func = lambda events: filter(trigger, events)
         else:
             raise Exception("Bad trigger, function should return a bool.")
-    elif isinstance(trigger,str):
-        func = lambda events: filter(lambda x: trigger == x.type,events)
+    elif isinstance(trigger, str):
+        func = lambda events: filter(lambda x: trigger == x.type, events)
     elif isinstance(trigger, tuple):
         if len(trigger) == 2:
-            if isinstance(trigger[0],str):
-                func = lambda events: filter(lambda x: trigger[0] == x.type and trigger[1] == x.value,events)
+            if isinstance(trigger[0], str):
+                func = lambda events: filter(lambda x: trigger[0] == x.type and trigger[1] == x.value, events)
             else:
                 raise Exception("Bad trigger, frist element in tuple should be a string.")
         else:
@@ -220,11 +215,12 @@ def createeventfilter(trigger):
         if not trigger:
             raise Exception("Bad trigger, list should not be empty.")
         if all(map(lambda x: isinstance(x, str), trigger)):
-            func = lambda events: filter(lambda x: any(map(lambda y: x.type == y, trigger)),events)
+            func = lambda events: filter(lambda x: any(map(lambda y: x.type == y, trigger)), events)
         elif all(map(lambda x: isinstance(x, tuple), trigger)):
             if all(map(lambda x: len(x) == 2, trigger)):
-                if all(map(lambda x: isinstance(x[0],str), trigger)):
-                    func = lambda events: filter(lambda x: any(map(lambda y: x.type == y[0] and x.value == y[1], trigger)),events)
+                if all(map(lambda x: isinstance(x[0], str), trigger)):
+                    func = lambda events: filter(
+                        lambda x: any(map(lambda y: x.type == y[0] and x.value == y[1], trigger)), events)
                 else:
                     raise Exception("Bad trigger, frist element in tuple in list should be a string.")
             else:
@@ -233,9 +229,10 @@ def createeventfilter(trigger):
             raise Exception("Bad trigger, list should contain tuples or strings.")
     elif isinstance(trigger, dict):
         if all(map(lambda x: isinstance(x, str), trigger.keys())):
-            if all(map(lambda x: isinstance(x,list),trigger.values())):
-                func1 = lambda events: filter(lambda x: any(map(lambda y: x.type == y, trigger.keys())),events)
-                func2 = lambda events: filter(lambda x: any(map(lambda y: x.value == y, trigger[x.type])) or not trigger[x.type], events)
+            if all(map(lambda x: isinstance(x, list), trigger.values())):
+                func1 = lambda events: filter(lambda x: any(map(lambda y: x.type == y, trigger.keys())), events)
+                func2 = lambda events: filter(
+                    lambda x: any(map(lambda y: x.value == y, trigger[x.type])) or not trigger[x.type], events)
                 func = lambda events: func2(func1(events))
             else:
                 raise Exception("Bad trigger, values should be lists")
@@ -246,7 +243,8 @@ def createeventfilter(trigger):
 
     return func
 
-def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose = True, time_trigger=False):
+
+def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose=True, time_trigger=False):
     """Gathers data and returns a list of data and triggering events. The
     arguments trigger and stroptrigger are used to create event filters (using
     the function createeventfilter).
@@ -274,13 +272,13 @@ def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose = True, t
     if isinstance(time, dict):
         for key in time.keys():
             if milliseconds:
-                time[key] = int(ceil((time[key]/1000.0)*fSample))
-            elif isinstance(time[key],float):
+                time[key] = int(ceil((time[key] / 1000.0) * fSample))
+            elif isinstance(time[key], float):
                 time[key] = int(ceil(time[key]))
     else:
         if milliseconds:
-            time = ceil((time/1000.0)*fSample)
-        elif isinstance(time,float):
+            time = ceil((time / 1000.0) * fSample)
+        elif isinstance(time, float):
             time = int(ceil(time))
 
     gatherFilter = createeventfilter(trigger)
@@ -289,17 +287,16 @@ def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose = True, t
     global ftc
     nSamples, nEvents = ftc.poll()
 
-
     stillgathering = True;
     gather = []
     events = []
     data = []
 
     while True:
-        nSamples, nEvents2 = ftc.wait(-1,nEvents, 500)
+        nSamples, nEvents2 = ftc.wait(-1, nEvents, 500)
 
         if nEvents != nEvents2:
-            e = ftc.getEvents((nEvents, nEvents2 -1))
+            e = ftc.getEvents((nEvents, nEvents2 - 1))
             stopevents = stopFilter(e)
             nEvents = nEvents2
 
@@ -314,7 +311,7 @@ def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose = True, t
             e = gatherFilter(e)
 
             for event in e:
-                if not isinstance(time,dict):
+                if not isinstance(time, dict):
                     endSample = event.sample + time
                 else:
                     endSample = event.sample + time[event.type]
@@ -322,15 +319,16 @@ def gatherdata(trigger, time, stoptrigger, milliseconds=False, verbose = True, t
                 gather.append((event, endSample))
 
         for point in gather:
-            event,endSample = point
+            event, endSample = point
             if nSamples > endSample:
                 events.append(event)
-                data.append(ftc.getData((event.sample, endSample -1)))
+                data.append(ftc.getData((event.sample, endSample - 1)))
                 gather.remove(point)
                 if verbose:
-                    print "Gathering " + str(event.type) + " " + str(event.value) + " data from " + str(event.sample) + " to " +str(endSample)
+                    print "Gathering " + str(event.type) + " " + str(event.value) + " data from " + str(
+                        event.sample) + " to " + str(endSample)
 
         if not stillgathering and not gather:
             break
 
-    return (data,events, stopevents)
+    return (data, events, stopevents)
