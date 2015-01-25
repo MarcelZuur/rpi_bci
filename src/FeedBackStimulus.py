@@ -7,7 +7,7 @@ the most frequent prediction in the buffer is taken, if these are all equal the 
 After a final prediction is made the robot (see Robot) is moved according to the predicted value and the buffer
 is reset then new predictions are gathered again starting the same process over again.
 SigProc has to have trained a classifier before to be able to generate predictions, so CalibrationStimulus and
-TrainClassifier should have been run atleast once before this.
+TrainClassifier should have been run at least once before this.
 
 
 Attributes:

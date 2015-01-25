@@ -3,7 +3,7 @@
 This script sends an event to the buffer signalling SigProc to start training the classifier,
 it then waits for SigProc to send an event to the buffer that it has finished before it exits.
 SigProc has to have gathered data before from the Calibration phase to be able to train the classifier,
-so CalibrationStimulus should have been run atleast once before this.
+so CalibrationStimulus should have been run at least once before this.
 
 """
 
