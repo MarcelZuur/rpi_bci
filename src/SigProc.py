@@ -1,18 +1,45 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
 import sys
 
 from network import bufhelp
-from Classifier import Classifier
+from Classifier import SVMClassifier,LRClassifier
+import ConfigParser
+
 sys.path.append("../../dataAcq/buffer/python")
 sys.path.append("../signalProc")
 import pickle
 import numpy as np
 
-#connect
-bufhelp.connect()
+Config = ConfigParser.ConfigParser()
+Config.read("settings.ini")
+
+def ConfigSectionMap(section):
+    dict1 = {}
+    options = Config.options(section)
+    for option in options:
+        try:
+            dict1[option] = Config.get(section, option)
+            if dict1[option] == -1:
+                print("skip: %s" % option)
+        except:
+            print("exception on %s!" % option)
+            dict1[option] = None
+    return dict1
+
+connectionOptions = ConfigSectionMap("Connection")
+#connect to buffer
+hostname = connectionOptions("hostname")
+port = connectionOptions("port")
+bufhelp.connect(hostname=hostname,port=port)
 
 #model init
-classifier = Classifier(250)
+sigProcOption = ConfigSectionMap("SignalProcessing")
+fsample = sigProcOption("fsample")
+channels = sigProcOption("channels")
+if(sigProcOption("classifier").lower() == "lr"):
+    classifier = LRClassifier(fsample,channels)
+else:
+    classifier = SVMClassifier(fsample,channels)
 
 #param
 trlen_ms = 2000

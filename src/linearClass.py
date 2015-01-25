@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.signal import butter, lfilter
 from network import bufhelp, preproc
 import sklearn.svm
 
@@ -21,8 +22,21 @@ def train(data, events):
     lin_clf.fit(X, Y)
     return lin_clf
 
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
 
-with open("subject_data", "rb") as f:
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
+
+
+with open("subject_data_marcel1", "rb") as f:
     data_tuple = np.load(f)
     data = data_tuple['data']
     events = data_tuple['events']

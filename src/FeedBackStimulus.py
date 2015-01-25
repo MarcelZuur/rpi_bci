@@ -1,3 +1,5 @@
+#!/usr/bin/python2.7
+import ConfigParser
 import threading
 import numpy as np
 import time
@@ -6,10 +8,33 @@ from Robot import Robot
 from scipy.stats import mode
 from network import bufhelp
 
+Config = ConfigParser.ConfigParser()
+Config.read("settings.ini")
+
+def ConfigSectionMap(section):
+    dict1 = {}
+    options = Config.options(section)
+    for option in options:
+        try:
+            dict1[option] = Config.get(section, option)
+            if dict1[option] == -1:
+                print("skip: %s" % option)
+        except:
+            print("exception on %s!" % option)
+            dict1[option] = None
+    return dict1
+
+try:
+    hostname = Config.get("Connection","hostname")
+    port = Config.get("Connection","port")
+except:
+    print "hostname and/or port number are not configured properly"
+
 #connect to buffer
-bufhelp.connect()
+bufhelp.connect(hostname=hostname,port=port)
 print("connected")
 
+ledOptions = ConfigSectionMap("LED")
 #init robot
 robot = Robot()
 
@@ -18,12 +43,15 @@ nSymbols = 4
 buffer_size = 3
 
 #init frequencies
+freqs = ledOptions("frequencies")
 frequencies = np.zeros(nSymbols)
-frequencies[0] = 11 #LEFT
-frequencies[1] = 13 #FORWARD
-frequencies[2] = 9 #RIGHT
+frequencies[0] = freqs[0] #LEFT
+frequencies[1] = freqs[1] #FORWARD
+frequencies[2] = freqs[2] #RIGHT
 frequencies[3] = 25 #STOP
-leds=LEDPI([11, 13, 15])
+
+gpio = ledOptions("gpio")
+leds=LEDPI(gpio)
 t1 = threading.Thread(target=leds.blinkLED)
 t1.start()
 leds.changeLED(frequencies[0:3].tolist())

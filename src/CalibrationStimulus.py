@@ -1,3 +1,4 @@
+#!/usr/bin/python2.7
 """Calibration stimulus script.
 
 This script displays the stimulus of the calibration phase, and sends messages to the buffer used by SigProc.py
@@ -13,32 +14,58 @@ import numpy as np
 import time
 from LEDPI import LEDPI
 from network import bufhelp
+import ConfigParser
 
+Config = ConfigParser.ConfigParser()
+Config.read("settings.ini")
+
+def ConfigSectionMap(section):
+    dict1 = {}
+    options = Config.options(section)
+    for option in options:
+        try:
+            dict1[option] = Config.get(section, option)
+            if dict1[option] == -1:
+                print("skip: %s" % option)
+        except:
+            print("exception on %s!" % option)
+            dict1[option] = None
+    return dict1
+
+connectionOptions = ConfigSectionMap("Connection")
+calibrationOptions = ConfigSectionMap("Calibration")
+ledOptions = ConfigSectionMap("LED")
+
+hostname = connectionOptions("hostname")
+port = connectionOptions("port")
 #connect to buffer
-bufhelp.connect()
+bufhelp.connect(hostname=hostname,port=port)
 print(bufhelp.fSample)
 print("connected")
 
 #init stimuli
 nSymbols = 3
-nSequences = 6
+nSequences = calibrationOptions["sequences"]
 nEpochs = nSymbols*5
-interEpochDelay = 0.5
-stimulusDuration = 2.5
-stimulusEventDelay = 0.5
-stimulusFullDuration = 2
-interSequenceDelay = 5
+interEpochDelay = calibrationOptions["interEpochDelay"]
+stimulusDuration = calibrationOptions["stimulusDuration"]
+stimulusEventDelay = calibrationOptions["stimulusEventDelay"]
+stimulusFullDuration = calibrationOptions["stimulusFullDuration"]
+interSequenceDelay = calibrationOptions["interSequenceDelay"]
 np.random.seed(0)
 stimuli = np.random.randint(nSymbols, size=(nSequences, nEpochs)) #TODO: less random
 
 #init frequencies
+freqs = ledOptions("frequencies")
 frequencies = np.zeros(nSymbols)
-frequencies[0] = 11
-frequencies[1] = 13
-frequencies[2] = 9
+frequencies[0] = freqs[0]
+frequencies[1] = freqs[1]
+frequencies[2] = freqs[2]
 #frequencies[3] = 25
 frequency_full = 0
-leds=LEDPI([13, 15, 11])
+
+gpio = ledOptions("gpio")
+leds=LEDPI(gpio)
 t1 = threading.Thread(target=leds.blinkLED)
 t1.start()
 frequencies_led=frequencies[0:3].tolist()
@@ -80,3 +107,4 @@ for i in xrange(nSequences):
 bufhelp.sendevent('stimulus.training', 'end')
 leds.blink = False
 print("calibration END")
+

@@ -25,7 +25,8 @@ class Classifier(object):
         freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend="linear",
                                       window='hann', )
         self._freqs = freqs
-        X = np.ascontiguousarray(X[:, :, self.channel_idxs])
+        if(self.channel_idxs is not None):
+            X = np.ascontiguousarray(X[:, :, self.channel_idxs])
         freqs_idxs = np.logical_and(freqs >= 3, freqs <=45 )
         freqs = freqs[freqs_idxs]
         X = np.ascontiguousarray(X[:, freqs_idxs, :])
@@ -75,7 +76,8 @@ class Classifier(object):
 
     def plot_data(self, data, events):
         X = np.array(data, dtype=np.float32)
-        X = np.ascontiguousarray(X[:, :, self.channel_idxs])
+        if(self.channel_idxs is not None):
+            X = np.ascontiguousarray(X[:, :, self.channel_idxs])
         y = self.convert_events(events)
         freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend='linear',
                                       window='hann', )
