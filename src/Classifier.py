@@ -2,15 +2,14 @@ import pickle
 
 import numpy as np
 import scipy
-import sklearn.svm
+import sklearn
 from sklearn.grid_search import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from scipy.signal import butter, lfilter
 from matplotlib import ticker
 
-from network import preproc
 
-
+#Base Classifier class. Contains most of the functions used for preprocessing data, training, predicting and validating.
 class Classifier(object):
     def __init__(self, fsample, channel_idxs):
         self.clf = None
@@ -116,11 +115,10 @@ class LRClassifier(Classifier):
 class SVMClassifier(Classifier):
     def __init__(self, fsample=256.0, channel_idxs=np.arange(12, 17)):
         super(SVMClassifier, self).__init__(fsample, channel_idxs)
-        self.clf = sklearn.svm.LinearSVC()
-
+        self.clf= GridSearchCV(sklearn.svm.LinearSVC(), param_grid={'C': [1, 10]}, scoring="accuracy")
 
 if __name__ == '__main__':
-    with open("subject_data_marcel1", "rb") as f:
+    with open("subject_data_marcel2101_2", "rb") as f:
         data_tuple = np.load(f)
         data = data_tuple['data']
         events = data_tuple['events']
@@ -128,7 +126,7 @@ if __name__ == '__main__':
     #Test the SVM classifier
     classifier = SVMClassifier()
     classifier.plot_data(data, events)
-    
+
     classifier.train(data[0:len(data) * 2/3], events[0:len(data) * 2/3])
     classifier.validate(data[len(data) * 2/3:len(data)],events[len(events)*2/3:len(events)])
     #Test the logistic regression classifier
