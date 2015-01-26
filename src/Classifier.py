@@ -40,11 +40,11 @@ class Classifier(object):
         X = np.array(data, dtype=np.float32)
         freqs, X = scipy.signal.welch(X, fs=self.fsample, axis=1, scaling='spectrum', detrend="linear",
                                       window='hann', )
-        self._freqs = freqs
         if (self.channel_idxs is not None):
             X = np.ascontiguousarray(X[:, :, self.channel_idxs])
         freqs_idxs = np.logical_and(freqs >= 3, freqs <= 45)
         freqs = freqs[freqs_idxs]
+        self._freqs = freqs
         X = np.ascontiguousarray(X[:, freqs_idxs, :])
         X.shape = (X.shape[0], X.shape[1] * X.shape[2])
         return X
@@ -154,7 +154,7 @@ class SVMClassifier(Classifier):
 
 
 if __name__ == '__main__':
-    with open("subject_data_fran_1", "rb") as f:
+    with open("data2\\subject_data_marcel_floor", "rb") as f:
         data_tuple = np.load(f)
         data = data_tuple['data']
         events = data_tuple['events']

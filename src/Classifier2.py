@@ -3,6 +3,7 @@ import pickle
 from matplotlib import ticker
 import numpy as np
 import scipy
+from scipy import signal
 from sklearn.grid_search import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 
@@ -128,7 +129,7 @@ class Classifier():
             X_avg = np.mean(X_avg, axis=0)
             X2_avg = np.mean(X2[y2 == i], axis=2)
             X2_avg = np.mean(X2_avg, axis=0)
-            ax = plt.subplot(1, 3, i + 1)
+            ax = plt.subplot(3, 1, i + 1)
             plt.plot(freqs, X_avg, 'b', freqs, X2_avg, 'g', linewidth=1.5)
             plt.xlabel('frequency [Hz]')
             plt.ylabel('Linear spectrum [V]')
